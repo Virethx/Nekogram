@@ -1422,6 +1422,8 @@ public abstract class TextSelectionHelper<Cell extends TextSelectionHelper.Selec
                 if (copyItem != null) {
                     copyItem.setVisible(canCopy());
                 }
+                menu.findItem(android.R.id.shareText).setVisible(canCopy());
+                menu.findItem(android.R.id.textAssist).setVisible(canCopy());
                 if (selectedView != null) {
                     CharSequence charSequence = getText(selectedView, false);
                     if (!canCopy()) {
@@ -1490,8 +1492,6 @@ public abstract class TextSelectionHelper<Cell extends TextSelectionHelper.Selec
                     if (TextSelectionHelper.this.callback != null) {
                         TextSelectionHelper.this.callback.onTextTranslated();
                     }
-
-                    clear();
                 } else if (itemId == android.R.id.shareText) {
                     if (!isInSelectionMode()) {
                         return true;
@@ -1504,15 +1504,12 @@ public abstract class TextSelectionHelper<Cell extends TextSelectionHelper.Selec
                     shareIntent.setType("text/plain");
                     shareIntent.putExtra(Intent.EXTRA_TEXT, str.toString());
                     Intent chooserIntent = Intent.createChooser(shareIntent, LocaleController.getString(R.string.ShareFile));
-                    chooserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    ApplicationLoader.applicationContext.startActivity(chooserIntent);
+                    textSelectionOverlay.getContext().startActivity(chooserIntent);
                     hideActions();
                     clear(true);
                     if (TextSelectionHelper.this.callback != null) {
                         TextSelectionHelper.this.callback.onTextTranslated();
                     }
-
-                    clear();
                 } else if (itemId == R.id.menu_quote) {
                     quoteText();
                     hideActions();
