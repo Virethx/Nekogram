@@ -3,6 +3,7 @@ package tw.nekomimi.nekogram.forward;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
+import android.util.SparseIntArray;
 
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.LocaleController;
@@ -13,7 +14,6 @@ import org.telegram.ui.ActionBar.Theme;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 
 import tw.nekomimi.nekogram.NekoConfig;
 
@@ -30,15 +30,15 @@ public class ForwardItem {
             ID_FORWARD_NOQUOTE,
             ID_FORWARD_NOCAPTION,
     };
-    static final HashMap<Integer, String> ITEM_TITLES = new HashMap<>() {{
-        put(ID_FORWARD, LocaleController.getString(R.string.Forward));
-        put(ID_FORWARD_NOQUOTE, LocaleController.getString(R.string.NoQuoteForward));
-        put(ID_FORWARD_NOCAPTION, LocaleController.getString(R.string.NoCaptionForward));
+    static final SparseIntArray ITEM_TITLES = new SparseIntArray() {{
+        put(ID_FORWARD, R.string.Forward);
+        put(ID_FORWARD_NOQUOTE, R.string.NoQuoteForward);
+        put(ID_FORWARD_NOCAPTION, R.string.NoCaptionForward);
     }};
-    static final HashMap<Integer, String> ITEM_TITLES_SHORT = new HashMap<>() {{
-        put(ID_FORWARD, LocaleController.getString(R.string.Forward));
-        put(ID_FORWARD_NOQUOTE, LocaleController.getString(R.string.NoQuoteForwardShort));
-        put(ID_FORWARD_NOCAPTION, LocaleController.getString(R.string.NoCaptionForwardShort));
+    static final SparseIntArray ITEM_TITLES_SHORT = new SparseIntArray() {{
+        put(ID_FORWARD, R.string.Forward);
+        put(ID_FORWARD_NOQUOTE, R.string.NoQuoteForwardShort);
+        put(ID_FORWARD_NOCAPTION, R.string.NoCaptionForwardShort);
     }};
 
     public static void setLastForwardOption(int option) {
@@ -61,7 +61,7 @@ public class ForwardItem {
         }
         if (!item.hasSubMenu()) {
             Arrays.stream(ITEM_IDS).forEach(itemId -> {
-                var subItem = item.addSubItem(itemId, new ForwardDrawable(itemId, share), ITEM_TITLES.get(itemId), resourcesProvider);
+                var subItem = item.addSubItem(itemId, new ForwardDrawable(itemId, share), LocaleController.getString(ITEM_TITLES.get(itemId)), resourcesProvider);
                 if (darkTheme) subItem.setColors(0xfffafafa, 0xfffafafa);
             });
             if (darkTheme) {
@@ -93,7 +93,7 @@ public class ForwardItem {
     }
 
     public static String getLastForwardOptionTitle(boolean hasCaption, boolean shortTitle) {
-        return (shortTitle ? ITEM_TITLES_SHORT : ITEM_TITLES).get(getLastForwardOption(hasCaption));
+        return LocaleController.getString((shortTitle ? ITEM_TITLES_SHORT : ITEM_TITLES).get(getLastForwardOption(hasCaption)));
     }
 
     public static ForwardDrawable getLastForwardOptionIcon(boolean hasCaption) {
