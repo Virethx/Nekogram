@@ -40892,27 +40892,30 @@ public class ChatActivity extends BaseFragment implements
             var primaryMessageObject = cell.getPrimaryMessageObject();
 
             ArrayList<Integer> options = new ArrayList<>();
+            ArrayList<CharSequence> items = new ArrayList<>();
+            var prevSelectedObject = selectedObject;
+            var prevSelectedObjectGroup = selectedObjectGroup;
             selectedObject = message;
             selectedObjectGroup = groupedMessages;
-            fillMessageMenu(primaryMessageObject, new ArrayList<>(), new ArrayList<>(), options);
+            fillMessageMenu(primaryMessageObject, new ArrayList<>(), items, options);
+            selectedObject = prevSelectedObject;
+            selectedObjectGroup = prevSelectedObjectGroup;
 
-            if (options.contains(OPTION_REPLY)) {
-                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.acc_action_reply, LocaleController.getString(R.string.Reply)));
-            }
-            if (options.contains(OPTION_COPY)) {
-                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.acc_action_copy, LocaleController.getString(R.string.Copy)));
-            }
-            if (options.contains(OPTION_FORWARD)) {
-                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.acc_action_forward, LocaleController.getString(R.string.Forward)));
-            }
-            if (options.contains(OPTION_DELETE)) {
-                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.acc_action_delete, LocaleController.getString(R.string.Delete)));
-            }
-            if (options.contains(OPTION_PIN)) {
-                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.acc_action_pin, LocaleController.getString(R.string.PinMessage)));
-            }
-            if (options.contains(OPTION_SAVE_TO_GALLERY)) {
-                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(R.id.acc_action_save_to_gallery, LocaleController.getString(R.string.SaveToGallery)));
+            for (int i = 0; i < options.size(); i++) {
+                var option = options.get(i);
+                var id = switch (option) {
+                    case OPTION_REPLY -> R.id.acc_action_reply;
+                    case OPTION_COPY -> R.id.acc_action_copy;
+                    case OPTION_FORWARD -> R.id.acc_action_forward;
+                    case OPTION_DELETE -> R.id.acc_action_delete;
+                    case OPTION_PIN -> R.id.acc_action_pin;
+                    case OPTION_SAVE_TO_GALLERY -> R.id.acc_action_save_to_gallery;
+                    default -> -1;
+                };
+                if (id == -1) {
+                    continue;
+                }
+                info.addAction(new AccessibilityNodeInfo.AccessibilityAction(id, items.get(i)));
             }
         }
 
