@@ -123,16 +123,21 @@ public class TypefaceHelper {
         return null;
     }
 
-    public static Typeface createTypeface(boolean bold, boolean italic) {
+    public static Typeface createTypeface(int weight, boolean italic) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            return Typeface.create(null, bold ? 500 : 400, italic);
+            return Typeface.create(null, weight, italic);
         }
-        return Typeface.create(bold ? "sans-serif-medium" : "sans-serif", italic ? Typeface.ITALIC : Typeface.NORMAL);
+        var family = switch (weight) {
+            case 800 -> "sans-serif-black";
+            case 500 -> "sans-serif-medium";
+            default -> "sans-serif";
+        };
+        return Typeface.create(family, italic ? Typeface.ITALIC : Typeface.NORMAL);
     }
 
     public static boolean isMediumWeightSupported() {
         if (mediumWeightSupported == null) {
-            mediumWeightSupported = !NekoConfig.forceFontWeightFallback && testTypeface(createTypeface(true, false));
+            mediumWeightSupported = !NekoConfig.forceFontWeightFallback && testTypeface(createTypeface(500, false));
             FileLog.d("mediumWeightSupported = " + mediumWeightSupported);
         }
         return mediumWeightSupported;
@@ -140,7 +145,7 @@ public class TypefaceHelper {
 
     public static boolean isItalicSupported() {
         if (italicSupported == null) {
-            italicSupported = testTypeface(createTypeface(false, true));
+            italicSupported = testTypeface(createTypeface(400, true));
             FileLog.d("italicSupported = " + italicSupported);
         }
         return italicSupported;

@@ -2394,17 +2394,17 @@ public class AndroidUtilities {
                     switch (assetPath) {
                         case TYPEFACE_ROBOTO_MEDIUM:
                             if (TypefaceHelper.isMediumWeightSupported()) {
-                                t = TypefaceHelper.createTypeface(true, false);
+                                t = TypefaceHelper.createTypeface(500, false);
                             } else {
                                 t = Typeface.create("sans-serif", Typeface.BOLD);
                             }
                             break;
                         case "fonts/ritalic.ttf":
-                            t = TypefaceHelper.createTypeface(false, true);
+                            t = TypefaceHelper.createTypeface(400, true);
                             break;
                         case TYPEFACE_ROBOTO_MEDIUM_ITALIC:
                             if (TypefaceHelper.isMediumWeightSupported()) {
-                                t = TypefaceHelper.createTypeface(true, true);
+                                t = TypefaceHelper.createTypeface(500, true);
                             } else {
                                 t = Typeface.create("sans-serif", Typeface.BOLD_ITALIC);
                             }
@@ -2414,6 +2414,13 @@ public class AndroidUtilities {
                             break;
                         case "fonts/rcondensedbold.ttf":
                             t = Typeface.create("sans-serif-condensed", Typeface.BOLD);
+                            break;
+                        case TYPEFACE_ROBOTO_EXTRA_BOLD:
+                            if (TypefaceHelper.isMediumWeightSupported()) {
+                                t = TypefaceHelper.createTypeface(800, false);
+                            } else {
+                                t = Typeface.create("sans-serif", Typeface.BOLD);
+                            }
                             break;
                         default:
                             if (Build.VERSION.SDK_INT >= 26) {
