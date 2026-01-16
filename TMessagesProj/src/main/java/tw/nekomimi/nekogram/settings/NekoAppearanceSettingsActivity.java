@@ -29,6 +29,7 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
     private final int appBarShadowRow = rowId++;
     private final int formatTimeWithSecondsRow = rowId++;
     private final int disableNumberRoundingRow = rowId++;
+    private final int hideBottomNavigationBarRow = rowId++;
     private final int tabletModeRow = rowId++;
     private final int eventTypeRow = rowId++;
 
@@ -63,6 +64,7 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
         items.add(UItem.asCheck(appBarShadowRow, LocaleController.getString(R.string.DisableAppBarShadow)).slug("appBarShadow").setChecked(NekoConfig.disableAppBarShadow));
         items.add(UItem.asCheck(formatTimeWithSecondsRow, LocaleController.getString(R.string.FormatWithSeconds)).slug("formatTimeWithSeconds").setChecked(NekoConfig.formatTimeWithSeconds));
         items.add(UItem.asCheck(disableNumberRoundingRow, LocaleController.getString(R.string.DisableNumberRounding), "4.8K -> 4777").slug("disableNumberRounding").setChecked(NekoConfig.disableNumberRounding));
+        items.add(UItem.asCheck(hideBottomNavigationBarRow, LocaleController.getString(R.string.HideBottomNavigationBar)).setChecked(NekoConfig.hideBottomNavigationBar).slug("hideBottomNavigationBar"));
         items.add(TextSettingsCellFactory.of(eventTypeRow, LocaleController.getString(R.string.EventType), switch (NekoConfig.eventType) {
             case 1 -> LocaleController.getString(R.string.Christmas);
             case 2 -> LocaleController.getString(R.string.Valentine);
@@ -172,6 +174,12 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
             NekoConfig.togglePredictiveBackAnimation();
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(NekoConfig.predictiveBackAnimation);
+            }
+            showRestartBulletin();
+        } else if (id == hideBottomNavigationBarRow) {
+            NekoConfig.toggleHideBottomNavigationBar();
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(NekoConfig.hideBottomNavigationBar);
             }
             showRestartBulletin();
         }

@@ -142,6 +142,7 @@ public class NekoConfig {
     public static boolean hideChannelBottomButtons = false;
     public static boolean keepFormatting = true;
     public static boolean predictiveBackAnimation = false;
+    public static boolean hideBottomNavigationBar = false;
 
     public static boolean shouldNOTTrustMe = false;
 
@@ -244,6 +245,7 @@ public class NekoConfig {
             hideChannelBottomButtons = preferences.getBoolean("hideChannelBottomButtons", false);
             keepFormatting = preferences.getBoolean("keepFormatting", true);
             predictiveBackAnimation = preferences.getBoolean("predictiveBackAnimation", false);
+            hideBottomNavigationBar = preferences.getBoolean("hideBottomNavigationBar", false);
 
             LensHelper.checkLensSupportAsync();
             preferences.registerOnSharedPreferenceChangeListener(listener);
@@ -399,6 +401,14 @@ public class NekoConfig {
         SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("predictiveBackAnimation", predictiveBackAnimation);
+        editor.apply();
+    }
+
+    public static void toggleHideBottomNavigationBar() {
+        hideBottomNavigationBar = !hideBottomNavigationBar;
+        SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("hideBottomNavigationBar", hideBottomNavigationBar);
         editor.apply();
     }
 

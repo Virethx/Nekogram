@@ -690,7 +690,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         items.add(UItem.asShadow(null));
 
-        items.add(SettingCell.Factory.of(50, 0xFFB3D3FF, 0xFF7FAFFF, R.drawable.filled_profile_settings, getString(R.string.NekoSettings)));
+        items.add(SettingCell.Factory.of(50, 0xFFD1E4FF, 0xFF9EC5FF, R.drawable.filled_profile_settings, getString(R.string.NekoSettings)));
 
         items.add(UItem.asShadow(null));
 
