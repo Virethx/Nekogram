@@ -66,6 +66,7 @@ import java.util.Collections;
 
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
+import tw.nekomimi.nekogram.BackButtonMenuRecent;
 
 public class MainTabsActivity extends ViewPagerActivity implements NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target {
     public static final int TABS_COUNT = 4;
@@ -239,6 +240,10 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         tabs[INDEX_PROFILE] = GlassTabView.createAvatar(context, resourceProvider, currentAccount, R.string.MainTabsProfile);
         tabs[INDEX_PROFILE].setOnLongClickListener(v -> {
             openAccountSelector(v);
+            return true;
+        });
+        tabs[INDEX_CHATS].setOnLongClickListener(v -> {
+            BackButtonMenuRecent.show(currentAccount, this, v, null);
             return true;
         });
 
