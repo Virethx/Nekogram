@@ -23,7 +23,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -50,17 +49,16 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.DialogCell;
-import org.telegram.ui.Cells.HeaderCell;
-import org.telegram.ui.Cells.TextDetailSettingsCell;
-import org.telegram.ui.Cells.TextInfoPrivacyCell;
-import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ColoredImageSpan;
 import org.telegram.ui.Components.FlickerLoadingView;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.UItem;
+import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.LaunchActivity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -72,12 +70,8 @@ public class NekoDonateActivity extends BaseNekoSettingsActivity implements Purc
     private static final List<String> SKUS = Arrays.asList("donate001", "donate002", "donate005", "donate010", "donate020", "donate050", "donate100");
     private final List<ConfigHelper.Crypto> cryptos = ConfigHelper.getCryptos();
 
-    private int donateRow;
-    private int placeHolderRow;
-    private int donate2Row;
-
-    private int cryptoRow;
-    private int crypto2Row;
+    private final int donateRow = 100;
+    private final int cryptoRow = 200;
 
     private BillingClient billingClient;
     private List<ProductDetails> productDetails;
@@ -92,6 +86,13 @@ public class NekoDonateActivity extends BaseNekoSettingsActivity implements Purc
                 .build();
 
         return true;
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        super.onFragmentDestroy();
+
+        billingClient.endConnection();
     }
 
     private void showErrorAlert(BillingResult result) {
@@ -137,11 +138,9 @@ public class NekoDonateActivity extends BaseNekoSettingsActivity implements Purc
                         if (queryResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                             if (!list.isEmpty()) {
                                 AndroidUtilities.runOnUIThread(() -> {
-                                    if (listAdapter != null) {
-                                        productDetails = list;
-                                        updateRows();
-                                        listAdapter.notifyItemChanged(donateRow + 1);
-                                        listAdapter.notifyItemRangeInserted(donateRow + 2, productDetails.size() - 1);
+                                    productDetails = list;
+                                    if (listView != null) {
+                                        listView.adapter.update(true);
                                     }
                                 });
                             }
@@ -158,14 +157,40 @@ public class NekoDonateActivity extends BaseNekoSettingsActivity implements Purc
         return fragmentView;
     }
 
+
     @Override
-    protected void onItemClick(View view, int position, float x, float y) {
-        if (position > donateRow && position < donate2Row) {
-            if (productDetails != null && productDetails.size() > position - donateRow - 1) {
+    protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
+        if (cryptos != null && !cryptos.isEmpty()) {
+            items.add(UItem.asHeader(LocaleController.getString(R.string.Cryptocurrency)));
+            var cryptoId = 0;
+            for (var crypto : cryptos) {
+                items.add(TextDetailSettingsCellFactory.of(cryptoRow + cryptoId++, String.format("%s (%s)", crypto.currency, crypto.chain), crypto.address));
+            }
+            items.add(UItem.asShadow(null));
+        }
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.GooglePlay)));
+        if (productDetails != null && !productDetails.isEmpty()) {
+            for (int i = 0; i < productDetails.size(); i++) {
+                var product = productDetails.get(i);
+                var details = product.getOneTimePurchaseOfferDetails();
+                items.add(TextSettingsCellFactory.of(donateRow + i, details != null ? details.getFormattedPrice() : product.getName()));
+            }
+        } else {
+            items.add(UItem.asFlicker(1, FlickerLoadingView.TEXT_SETTINGS_TYPE));
+        }
+        items.add(UItem.asShadow(null));
+    }
+
+    @Override
+    protected void onItemClick(UItem item, View view, int position, float x, float y) {
+        var id = item.id;
+        if (id >= donateRow && id < cryptoRow) {
+            if (productDetails != null && productDetails.size() > id - donateRow) {
                 var productDetailsParamsList =
                         ImmutableList.of(
                                 BillingFlowParams.ProductDetailsParams.newBuilder()
-                                        .setProductDetails(productDetails.get(position - donateRow - 1))
+                                        .setProductDetails(productDetails.get(id - donateRow))
                                         .build()
                         );
                 BillingFlowParams flowParams = BillingFlowParams.newBuilder()
@@ -173,68 +198,34 @@ public class NekoDonateActivity extends BaseNekoSettingsActivity implements Purc
                         .build();
                 billingClient.launchBillingFlow(getParentActivity(), flowParams);
             }
-        } else if (position > cryptoRow && position < crypto2Row) {
-            ConfigHelper.Crypto crypto = cryptos.get(position - cryptoRow - 1);
+        } else if (id >= cryptoRow) {
+            ConfigHelper.Crypto crypto = cryptos.get(id - cryptoRow);
             QRCodeBottomSheet.showForCrypto(this, crypto);
         }
     }
 
     @Override
-    protected boolean onItemLongClick(View view, int position, float x, float y) {
-        if (position > cryptoRow && position < crypto2Row) {
-            ConfigHelper.Crypto crypto = cryptos.get(position - cryptoRow - 1);
+    protected boolean onItemLongClick(UItem item, View view, int position, float x, float y) {
+        var id = item.id;
+        if (id > cryptoRow) {
+            ConfigHelper.Crypto crypto = cryptos.get(id - cryptoRow);
             ItemOptions.makeOptions(this, view)
                     .setScrimViewBackground(new ColorDrawable(getThemedColor(Theme.key_windowBackgroundWhite)))
                     .add(R.drawable.msg_qrcode, LocaleController.getString(R.string.GetQRCode), () -> QRCodeBottomSheet.showForCrypto(this, crypto))
                     .add(R.drawable.msg_copy, LocaleController.getString(R.string.Copy), () -> {
                         AndroidUtilities.addToClipboard(crypto.address);
-                        BulletinFactory.of(NekoDonateActivity.this).createCopyBulletin(LocaleController.getString(R.string.TextCopied)).show();
+                        BulletinFactory.of(this).createCopyBulletin(LocaleController.getString(R.string.TextCopied)).show();
                     })
                     .setMinWidth(190)
                     .show();
             return true;
         }
-        return super.onItemLongClick(view, position, x, y);
-    }
-
-    @Override
-    protected BaseListAdapter createAdapter(Context context) {
-        return new ListAdapter(context);
+        return super.onItemLongClick(item, view, position, x, y);
     }
 
     @Override
     protected String getActionBarTitle() {
         return LocaleController.getString(R.string.Donate);
-    }
-
-    @Override
-    public void onFragmentDestroy() {
-        super.onFragmentDestroy();
-
-        billingClient.endConnection();
-    }
-
-    @Override
-    protected void updateRows() {
-        rowCount = 0;
-
-        if (cryptos == null || cryptos.isEmpty()) {
-            cryptoRow = -1;
-            crypto2Row = -1;
-        } else {
-            cryptoRow = rowCount++;
-            rowCount += cryptos.size();
-            crypto2Row = rowCount++;
-        }
-
-        donateRow = rowCount++;
-        if (productDetails == null || productDetails.isEmpty()) {
-            placeHolderRow = rowCount++;
-        } else {
-            placeHolderRow = -1;
-            rowCount += productDetails.size();
-        }
-        donate2Row = rowCount++;
     }
 
     @Override
@@ -265,81 +256,6 @@ public class NekoDonateActivity extends BaseNekoSettingsActivity implements Purc
             }
         } else {
             showErrorAlert(billingResult);
-        }
-    }
-
-    private class ListAdapter extends BaseListAdapter {
-
-        public ListAdapter(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial, boolean divider) {
-            switch (holder.getItemViewType()) {
-                case TYPE_SETTINGS: {
-                    TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
-                    if (position > donateRow && position < donate2Row) {
-                        if (productDetails != null) {
-                            if (productDetails.size() > position - donateRow - 1) {
-                                var product = productDetails.get(position - donateRow - 1);
-                                var details = product.getOneTimePurchaseOfferDetails();
-                                textCell.setText(details != null ? details.getFormattedPrice() : product.getName(), divider);
-                            }
-                        } else {
-                            textCell.setText(LocaleController.getString(R.string.Loading), divider);
-                        }
-                    }
-                    break;
-                }
-                case TYPE_HEADER: {
-                    HeaderCell headerCell = (HeaderCell) holder.itemView;
-                    if (position == donateRow) {
-                        headerCell.setText(LocaleController.getString(R.string.GooglePlay));
-                    } else if (position == cryptoRow) {
-                        headerCell.setText(LocaleController.getString(R.string.Cryptocurrency));
-                    }
-                    break;
-                }
-                case TYPE_DETAIL_SETTINGS: {
-                    TextDetailSettingsCell cell = (TextDetailSettingsCell) holder.itemView;
-                    if (position > cryptoRow && position < crypto2Row) {
-                        ConfigHelper.Crypto crypto = cryptos.get(position - cryptoRow - 1);
-                        cell.setTextAndValue(String.format("%s (%s)", crypto.currency, crypto.chain), crypto.address, divider);
-                    }
-                    break;
-                }
-                case TYPE_FLICKER: {
-                    FlickerLoadingView flickerLoadingView = (FlickerLoadingView) holder.itemView;
-                    flickerLoadingView.setViewType(FlickerLoadingView.TEXT_SETTINGS_TYPE);
-                    flickerLoadingView.setIsSingleCell(true);
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            int type = holder.getItemViewType();
-            if (type == 2) {
-                return productDetails != null;
-            } else {
-                return super.isEnabled(holder);
-            }
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            if (position == donate2Row || position == crypto2Row) {
-                return TYPE_SHADOW;
-            } else if (position == donateRow || position == cryptoRow) {
-                return TYPE_HEADER;
-            } else if (position > cryptoRow && position < crypto2Row) {
-                return TYPE_DETAIL_SETTINGS;
-            } else if (position == placeHolderRow) {
-                return TYPE_FLICKER;
-            }
-            return TYPE_SETTINGS;
         }
     }
 

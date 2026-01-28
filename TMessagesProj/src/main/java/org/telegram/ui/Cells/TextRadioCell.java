@@ -147,7 +147,7 @@ public class TextRadioCell extends FrameLayout {
         return super.onTouchEvent(event);
     }
 
-    public void setTextAndCheck(String text, boolean checked, boolean divider) {
+    public void setTextAndCheck(CharSequence text, boolean checked, boolean divider) {
         textView.setText(text);
         isMultiline = false;
         radioButton.setChecked(checked, false);

@@ -14,7 +14,7 @@ import org.telegram.ui.LaunchActivity;
 import java.util.Locale;
 
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
-import tw.nekomimi.nekogram.settings.NekoAppearanceSettings;
+import tw.nekomimi.nekogram.settings.NekoAppearanceSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoChatSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoDonateActivity;
 import tw.nekomimi.nekogram.settings.NekoEmojiSettingsActivity;
@@ -61,7 +61,7 @@ public class SettingsHelper {
                 switch (segment.toLowerCase(Locale.US)) {
                     case "appearance":
                     case "a":
-                        fragment = new NekoAppearanceSettings();
+                        fragment = new NekoAppearanceSettingsActivity();
                         break;
                     case "chat":
                     case "chats":

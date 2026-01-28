@@ -1,16 +1,12 @@
 package tw.nekomimi.nekogram.accessibility;
 
-import android.content.Context;
 import android.view.View;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCheckCell;
-import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.UItem;
+import org.telegram.ui.Components.UniversalAdapter;
 
 import java.util.ArrayList;
 
@@ -20,16 +16,13 @@ import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 public class AccessibilitySettingsActivity extends BaseNekoSettingsActivity {
     private static final ArrayList<String> SEEKBAR_TIME_VALUES = new ArrayList<>();
 
-    private int seekbarHeadingRow;
-    private int showNumbersOfItemsRow;
-    private int showIndexOfItemRow;
-    private int showValueChangesRow;
-    private int timeBeforeAnnouncingOfSeekbarRow;
-    private int seekbarHeading2Row;
+    private final int showNumbersOfItemsRow = rowId++;
+    private final int showIndexOfItemRow = rowId++;
+    private final int showValueChangesRow = rowId++;
+    private final int timeBeforeAnnouncingOfSeekbarRow = rowId++;
 
-    private int announceFileProgressRow;
-    private int showTranslatedLanguageRow;
-    private int endRow;
+    private final int announceFileProgressRow = rowId++;
+    private final int showTranslatedLanguageRow = rowId++;
 
     static {
         SEEKBAR_TIME_VALUES.add(LocaleController.getString(R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarWithoutDelay));
@@ -38,51 +31,57 @@ public class AccessibilitySettingsActivity extends BaseNekoSettingsActivity {
         }
     }
 
-    @Override
-    protected void updateRows() {
-        super.updateRows();
-
-        seekbarHeadingRow = addRow();
-        showNumbersOfItemsRow = addRow("showNumbersOfItems");
-        showIndexOfItemRow = addRow("showIndexOfItem");
-        showValueChangesRow = addRow("showValueChanges");
-        timeBeforeAnnouncingOfSeekbarRow = addRow("timeBeforeAnnouncingOfSeekbar");
-        seekbarHeading2Row = addRow();
-
-        announceFileProgressRow = addRow("announceFileProgress");
-        showTranslatedLanguageRow = addRow("showTranslatedLanguage");
-        endRow = addRow();
+    private CharSequence getTimeBeforeAnnouncingOfSeekbar() {
+        return AccConfig.delayBetweenAnnouncingOfChangingOfSeekbarValue > 0 ?
+                LocaleController.formatString(R.string.AccTimeBeforeAnnouncingOfChangesOfSeekbarValue, AccConfig.delayBetweenAnnouncingOfChangingOfSeekbarValue) :
+                LocaleController.getString(R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarWithoutDelay);
     }
 
     @Override
-    protected void onItemClick(View view, int position, float x, float y) {
-        if (position == timeBeforeAnnouncingOfSeekbarRow) {
-            PopupHelper.show(SEEKBAR_TIME_VALUES, LocaleController.getString("AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarHeading", R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarHeading),
+    protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
+        items.add(UItem.asHeader(LocaleController.getString(R.string.AccSeekbarHeading)));
+        items.add(UItem.asCheck(showNumbersOfItemsRow, LocaleController.getString(R.string.AccNumberOfItems)).setChecked(AccConfig.showNumbersOfItems));
+        items.add(UItem.asCheck(showIndexOfItemRow, LocaleController.getString(R.string.AccIndexOfItem)).setChecked(AccConfig.showIndexOfItem));
+        items.add(UItem.asCheck(showValueChangesRow, LocaleController.getString(R.string.AccShowValueChanges)).setChecked(AccConfig.showSeekbarValueChanges));
+        items.add(TextSettingsCellFactory.of(timeBeforeAnnouncingOfSeekbarRow, LocaleController.getString(R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbar), getTimeBeforeAnnouncingOfSeekbar()));
+        items.add(UItem.asShadow(null));
+
+        items.add(UItem.asCheck(announceFileProgressRow, LocaleController.getString(R.string.AccAnnounceFileProgress)).setChecked(AccConfig.announceFileProgress));
+        items.add(UItem.asCheck(showTranslatedLanguageRow, LocaleController.getString(R.string.AccShowTranslatedLanguage)).setChecked(AccConfig.showTranslatedLanguage));
+        items.add(UItem.asShadow(null));
+    }
+
+    @Override
+    protected void onItemClick(UItem item, View view, int position, float x, float y) {
+        var id = item.id;
+        if (id == timeBeforeAnnouncingOfSeekbarRow) {
+            PopupHelper.show(SEEKBAR_TIME_VALUES, LocaleController.getString(R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarHeading),
                     AccConfig.delayBetweenAnnouncingOfChangingOfSeekbarValue / 50,
                     getParentActivity(), view, i -> {
                         AccConfig.setDelayBetweenAnnouncingOfChangingOfSeekbarValue(i * 50);
-                        listAdapter.notifyItemChanged(position);
+                        item.textValue = getTimeBeforeAnnouncingOfSeekbar();
+                        listView.adapter.notifyItemChanged(position);
                     }, resourcesProvider);
-        } else if (position == showNumbersOfItemsRow ||
-                position == showIndexOfItemRow ||
-                position == showValueChangesRow ||
-                position == announceFileProgressRow ||
-                position == showTranslatedLanguageRow
+        } else if (id == showNumbersOfItemsRow ||
+                id == showIndexOfItemRow ||
+                id == showValueChangesRow ||
+                id == announceFileProgressRow ||
+                id == showTranslatedLanguageRow
         ) {
-            TextCheckCell cell = (TextCheckCell) view;
-            if (position == showNumbersOfItemsRow) {
+            var cell = (TextCheckCell) view;
+            if (id == showNumbersOfItemsRow) {
                 AccConfig.saveShowNumbersOfItems();
                 cell.setChecked(AccConfig.showNumbersOfItems);
-            } else if (position == showIndexOfItemRow) {
+            } else if (id == showIndexOfItemRow) {
                 AccConfig.saveShowIndexOfItem();
                 cell.setChecked(AccConfig.showIndexOfItem);
-            } else if (position == showValueChangesRow) {
+            } else if (id == showValueChangesRow) {
                 AccConfig.saveShowSeekbarValueChanges();
                 cell.setChecked(AccConfig.showSeekbarValueChanges);
-            } else if (position == announceFileProgressRow) {
+            } else if (id == announceFileProgressRow) {
                 AccConfig.toggleAnnounceFileProgress();
                 cell.setChecked(AccConfig.announceFileProgress);
-            } else if (position == showTranslatedLanguageRow) {
+            } else if (id == showTranslatedLanguageRow) {
                 AccConfig.toggleShowTranslatedLanguage();
                 cell.setChecked(AccConfig.showTranslatedLanguage);
             }
@@ -90,67 +89,7 @@ public class AccessibilitySettingsActivity extends BaseNekoSettingsActivity {
     }
 
     @Override
-    protected BaseListAdapter createAdapter(Context context) {
-        return new ListAdapter(context);
-    }
-
-    @Override
     protected String getActionBarTitle() {
         return LocaleController.getString(R.string.AccessibilitySettings);
-    }
-
-    private class ListAdapter extends BaseListAdapter {
-
-        public ListAdapter(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial, boolean divider) {
-            switch (holder.getItemViewType()) {
-                case TYPE_SETTINGS: {
-                    TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
-                    if (position == timeBeforeAnnouncingOfSeekbarRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbar), AccConfig.delayBetweenAnnouncingOfChangingOfSeekbarValue > 0 ? LocaleController.formatString(R.string.AccTimeBeforeAnnouncingOfChangesOfSeekbarValue, AccConfig.delayBetweenAnnouncingOfChangingOfSeekbarValue) : LocaleController.getString(R.string.AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarWithoutDelay), divider);
-                    }
-                    break;
-                }
-                case TYPE_CHECK: {
-                    TextCheckCell textCell = (TextCheckCell) holder.itemView;
-                    if (position == showNumbersOfItemsRow) {
-                        textCell.setTextAndCheck(LocaleController.getString(R.string.AccNumberOfItems), AccConfig.showNumbersOfItems, divider);
-                    } else if (position == showIndexOfItemRow) {
-                        textCell.setTextAndCheck(LocaleController.getString(R.string.AccIndexOfItem), AccConfig.showIndexOfItem, divider);
-                    } else if (position == showValueChangesRow) {
-                        textCell.setTextAndCheck(LocaleController.getString(R.string.AccShowValueChanges), AccConfig.showSeekbarValueChanges, divider);
-                    } else if (position == announceFileProgressRow) {
-                        textCell.setTextAndCheck(LocaleController.getString(R.string.AccAnnounceFileProgress), AccConfig.announceFileProgress, divider);
-                    } else if (position == showTranslatedLanguageRow) {
-                        textCell.setTextAndCheck(LocaleController.getString(R.string.AccShowTranslatedLanguage), AccConfig.showTranslatedLanguage, divider);
-                    }
-                    break;
-                }
-                case TYPE_HEADER: {
-                    HeaderCell headerCell = (HeaderCell) holder.itemView;
-                    if (position == seekbarHeadingRow) {
-                        headerCell.setText(LocaleController.getString(R.string.AccSeekbarHeading));
-                    }
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            if (position == seekbarHeading2Row || position == endRow) {
-                return TYPE_SHADOW;
-            } else if (position == seekbarHeadingRow) {
-                return TYPE_HEADER;
-            } else if (position == timeBeforeAnnouncingOfSeekbarRow) {
-                return TYPE_SETTINGS;
-            } else {
-                return TYPE_CHECK;
-            }
-        }
     }
 }

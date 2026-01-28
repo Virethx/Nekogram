@@ -117,7 +117,7 @@ public class TextCheckbox2Cell extends FrameLayout {
         return super.onTouchEvent(event);
     }
 
-    public void setTextAndCheck(String text, boolean checked, boolean divider) {
+    public void setTextAndCheck(CharSequence text, boolean checked, boolean divider) {
         textView.setText(text);
         isMultiline = false;
         checkbox.setChecked(checked, false);

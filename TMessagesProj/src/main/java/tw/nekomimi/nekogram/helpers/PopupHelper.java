@@ -64,10 +64,7 @@ public class PopupHelper {
             for (int i = 0; i < entries.size(); i++) {
                 var entry = entries.get(i);
                 var finalI = i;
-                popup.add(0, entry, () -> listener.run(finalI));
-                if (checkedIndex == i) {
-                    popup.putCheck();
-                }
+                popup.addChecked(checkedIndex == i, entry, () -> listener.run(finalI));
             }
             popup.show();
         }

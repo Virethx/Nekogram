@@ -11,11 +11,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -23,13 +23,14 @@ import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCheckCell;
-import org.telegram.ui.Cells.TextInfoPrivacyCell;
-import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.RecyclerListView;
+import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.URLSpanNoUnderline;
+import org.telegram.ui.Components.UniversalAdapter;
+import org.telegram.ui.Components.UniversalRecyclerView;
 import org.telegram.ui.PasscodeActivity;
 
 import java.util.ArrayList;
@@ -38,22 +39,16 @@ import java.util.Locale;
 import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 
 public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
-
     private boolean passcodeSet;
 
-    private int showInSettingsRow;
-    private int showInSettings2Row;
+    private final int showInSettingsRow = rowId++;
 
-    private int accountsStartRow;
-    private int accountsEndRow;
+    private final int accountsStartRow = 100;
 
-    private int panicCodeRow;
-    private int setPanicCodeRow;
-    private int removePanicCodeRow;
-    private int panicCode2Row;
+    private final int setPanicCodeRow = rowId++;
+    private final int removePanicCodeRow = rowId++;
 
-    private int clearPasscodesRow;
-    private int clearPasscodes2Row;
+    private final int clearPasscodesRow = rowId++;
 
     private final ArrayList<Integer> accounts = new ArrayList<>();
 
@@ -69,13 +64,50 @@ public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
     }
 
     @Override
-    protected void onItemClick(View view, int position, float x, float y) {
+    protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
+        items.add(UItem.asCheck(showInSettingsRow, LocaleController.getString(R.string.PasscodeShowInSettings)).setEnabled(passcodeSet).setChecked(!PasscodeHelper.isSettingsHidden()));
+        var link = String.format(Locale.ENGLISH, "https://t.me/nekosettings/%s", PasscodeHelper.getSettingsKey());
+        var stringBuilder = new SpannableStringBuilder(AndroidUtilities.replaceTags(LocaleController.getString(R.string.PasscodeShowInSettingsAbout)));
+        stringBuilder.append("\n").append(link);
+        stringBuilder.setSpan(new URLSpanNoUnderline(null) {
+            @Override
+            public void onClick(@NonNull View view) {
+                ClipboardManager clipboard = (ClipboardManager) ApplicationLoader.applicationContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("label", link);
+                clipboard.setPrimaryClip(clip);
+                BulletinFactory.of(NekoPasscodeSettingsActivity.this).createCopyLinkBulletin().show();
+            }
+        }, stringBuilder.length() - link.length(), stringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        items.add(UItem.asShadow(stringBuilder).setEnabled(passcodeSet));
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.Account)).setEnabled(passcodeSet));
+        for (var account : accounts) {
+            items.add(AccountCellFactory.of(accountsStartRow + account, account).setEnabled(passcodeSet));
+        }
+        items.add(UItem.asShadow(LocaleController.getString(R.string.PasscodeAbout)).setEnabled(passcodeSet));
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.PasscodePanicCode)).setEnabled(passcodeSet));
+        items.add(TextSettingsCellFactory.of(setPanicCodeRow, PasscodeHelper.hasPanicCode() ? LocaleController.getString(R.string.PasscodePanicCodeEdit) : LocaleController.getString(R.string.PasscodePanicCodeSet)).setEnabled(passcodeSet));
+        if (PasscodeHelper.hasPanicCode()) {
+            items.add(TextSettingsCellFactory.of(removePanicCodeRow, LocaleController.getString(R.string.PasscodePanicCodeRemove)).red().setEnabled(passcodeSet));
+        }
+        items.add(UItem.asShadow(LocaleController.getString(R.string.PasscodePanicCodeAbout)).setEnabled(passcodeSet));
+
+        if (BuildConfig.DEBUG) {
+            items.add(TextSettingsCellFactory.of(clearPasscodesRow, "Clear passcodes").red());
+            items.add(UItem.asShadow(null));
+        }
+    }
+
+    @Override
+    protected void onItemClick(UItem item, View view, int position, float x, float y) {
         if (!passcodeSet) {
             makePasscodeBulletin();
             return;
         }
-        if (position > accountsStartRow && position < accountsEndRow) {
-            var account = accounts.get(position - accountsStartRow - 1);
+        var id = item.id;
+        if (id >= accountsStartRow) {
+            var account = id - accountsStartRow;
             var builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
 
             var linearLayout = new LinearLayout(getParentActivity());
@@ -124,7 +156,7 @@ public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
                             .setPositiveButton(LocaleController.getString(R.string.DisablePasscodeTurnOff), (dialog, which) -> {
                                 var hidden = PasscodeHelper.isAccountHidden(account);
                                 PasscodeHelper.removePasscodeForAccount(account);
-                                listAdapter.notifyItemChanged(position);
+                                listView.adapter.notifyItemChanged(position);
                                 if (hidden) {
                                     getNotificationCenter().postNotificationName(NotificationCenter.mainUserInfoChanged);
                                 }
@@ -138,35 +170,31 @@ public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
 
             builder.setView(linearLayout);
             showDialog(builder.create());
-        } else if (position == clearPasscodesRow) {
+        } else if (id == clearPasscodesRow) {
             PasscodeHelper.clearAll();
             finishFragment();
-        } else if (position == setPanicCodeRow) {
+        } else if (id == setPanicCodeRow) {
             presentFragment(new PasscodeActivity(PasscodeActivity.TYPE_SETUP_CODE, Integer.MAX_VALUE));
-        } else if (position == removePanicCodeRow) {
+        } else if (id == removePanicCodeRow) {
             AlertDialog alertDialog = new AlertDialog.Builder(getParentActivity(), resourcesProvider)
                     .setTitle(LocaleController.getString(R.string.PasscodePanicCodeRemove))
                     .setMessage(LocaleController.getString(R.string.PasscodePanicCodeRemoveConfirmMessage))
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                     .setPositiveButton(LocaleController.getString(R.string.DisablePasscodeTurnOff), (dialog, which) -> {
                         PasscodeHelper.removePasscodeForAccount(Integer.MAX_VALUE);
-                        listAdapter.notifyItemChanged(setPanicCodeRow);
-                        listAdapter.notifyItemRemoved(removePanicCodeRow);
+                        listView.findItemByItemId(setPanicCodeRow).text = LocaleController.getString(R.string.PasscodePanicCodeSet);
+                        notifyItemChanged(setPanicCodeRow);
+                        notifyItemRemoved(removePanicCodeRow);
                         updateRows();
                     }).create();
             showDialog(alertDialog);
             ((TextView) alertDialog.getButton(Dialog.BUTTON_POSITIVE)).setTextColor(getThemedColor(Theme.key_text_RedBold));
-        } else if (position == showInSettingsRow) {
+        } else if (id == showInSettingsRow) {
             PasscodeHelper.setHideSettings(!PasscodeHelper.isSettingsHidden());
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(!PasscodeHelper.isSettingsHidden());
             }
         }
-    }
-
-    @Override
-    protected BaseListAdapter createAdapter(Context context) {
-        return new ListAdapter(context);
     }
 
     @Override
@@ -181,145 +209,40 @@ public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
 
     @Override
     public void onResume() {
+        super.onResume();
         passcodeSet = SharedConfig.passcodeHash.length() > 0;
         if (!passcodeSet) {
             makePasscodeBulletin();
         }
-        updateRows();
-        super.onResume();
+        listView.adapter.update(true);
     }
 
     private void makePasscodeBulletin() {
         BulletinFactory.of(this).createSimpleBulletin(R.raw.info, LocaleController.getString(R.string.PasscodeNeeded), LocaleController.getString(R.string.Passcode), () -> presentFragment(PasscodeActivity.determineOpenFragment())).show();
     }
 
-    @Override
-    protected void updateRows() {
-        super.updateRows();
-
-        showInSettingsRow = rowCount++;
-        showInSettings2Row = rowCount++;
-
-        accountsStartRow = rowCount++;
-        rowCount += accounts.size();
-        accountsEndRow = rowCount++;
-
-        panicCodeRow = rowCount++;
-        setPanicCodeRow = rowCount++;
-        if (!PasscodeHelper.hasPanicCode()) {
-            removePanicCodeRow = -1;
-        } else {
-            removePanicCodeRow = rowCount++;
+    protected static class AccountCellFactory extends UItem.UItemFactory<AccountCell> {
+        static {
+            setup(new AccountCellFactory());
         }
-        panicCode2Row = rowCount++;
 
-        if (false) {
-            clearPasscodesRow = rowCount++;
-            clearPasscodes2Row = rowCount++;
-        } else {
-            clearPasscodesRow = -1;
-            clearPasscodes2Row = -1;
+        @Override
+        public AccountCell createView(Context context, RecyclerListView listView, int currentAccount, int classGuid, Theme.ResourcesProvider resourcesProvider) {
+            return new AccountCell(context, resourcesProvider);
+        }
+
+        @Override
+        public void bindView(View view, UItem item, boolean divider, UniversalAdapter adapter, UniversalRecyclerView listView) {
+            var cell = (AccountCell) view;
+            var account = item.intValue;
+            cell.setAccount(account, PasscodeHelper.hasPasscodeForAccount(account), divider);
+        }
+
+        public static UItem of(int id, int account) {
+            var item = UItem.ofFactory(AccountCellFactory.class);
+            item.id = id;
+            item.intValue = account;
+            return item;
         }
     }
-
-    private class ListAdapter extends BaseListAdapter {
-
-        public ListAdapter(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial, boolean divider) {
-            switch (holder.getItemViewType()) {
-                case TYPE_SETTINGS: {
-                    TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
-                    textCell.setCanDisable(true);
-                    textCell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
-                    if (position == setPanicCodeRow) {
-                        textCell.setText(PasscodeHelper.hasPanicCode() ? LocaleController.getString(R.string.PasscodePanicCodeEdit) : LocaleController.getString(R.string.PasscodePanicCodeSet), removePanicCodeRow != -1);
-                    } else if (position == clearPasscodesRow) {
-                        textCell.setTextColor(getThemedColor(Theme.key_text_RedRegular));
-                        textCell.setText("Clear passcodes", divider);
-                    } else if (position == removePanicCodeRow) {
-                        textCell.setTextColor(getThemedColor(Theme.key_text_RedRegular));
-                        textCell.setText(LocaleController.getString(R.string.PasscodePanicCodeRemove), divider);
-                    }
-                    break;
-                }
-                case TYPE_CHECK: {
-                    TextCheckCell textCell = (TextCheckCell) holder.itemView;
-                    textCell.setEnabled(passcodeSet, null);
-                    if (position == showInSettingsRow) {
-                        textCell.setTextAndCheck(LocaleController.getString(R.string.PasscodeShowInSettings), !PasscodeHelper.isSettingsHidden(), divider);
-                    }
-                    break;
-                }
-                case TYPE_HEADER: {
-                    HeaderCell cell = (HeaderCell) holder.itemView;
-                    cell.setEnabled(passcodeSet, null);
-                    if (position == accountsStartRow) {
-                        cell.setText(LocaleController.getString(R.string.Account));
-                    } else if (position == panicCodeRow) {
-                        cell.setText(LocaleController.getString(R.string.PasscodePanicCode));
-                    }
-                    break;
-                }
-                case TYPE_INFO_PRIVACY: {
-                    TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    cell.setEnabled(passcodeSet, null);
-                    if (position == accountsEndRow) {
-                        cell.setText(LocaleController.getString(R.string.PasscodeAbout));
-                    } else if (position == panicCode2Row) {
-                        cell.setText(LocaleController.getString(R.string.PasscodePanicCodeAbout));
-                    } else if (position == showInSettings2Row) {
-                        var link = String.format(Locale.ENGLISH, "https://t.me/nekosettings/%s", PasscodeHelper.getSettingsKey());
-                        var stringBuilder = new SpannableStringBuilder(AndroidUtilities.replaceTags(LocaleController.getString(R.string.PasscodeShowInSettingsAbout)));
-                        stringBuilder.append("\n").append(link);
-                        stringBuilder.setSpan(new URLSpanNoUnderline(null) {
-                            @Override
-                            public void onClick(@NonNull View view) {
-                                ClipboardManager clipboard = (ClipboardManager) ApplicationLoader.applicationContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                                ClipData clip = ClipData.newPlainText("label", link);
-                                clipboard.setPrimaryClip(clip);
-                                BulletinFactory.of(NekoPasscodeSettingsActivity.this).createCopyLinkBulletin().show();
-                            }
-                        }, stringBuilder.length() - link.length(), stringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        cell.setText(stringBuilder);
-                    }
-                    break;
-                }
-                case TYPE_ACCOUNT: {
-                    AccountCell cell = (AccountCell) holder.itemView;
-                    cell.setEnabled(passcodeSet);
-                    int account = accounts.get(position - accountsStartRow - 1);
-                    cell.setAccount(account, PasscodeHelper.hasPasscodeForAccount(account), divider);
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return passcodeSet && super.isEnabled(holder);
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            if (position == clearPasscodes2Row) {
-                return TYPE_SHADOW;
-            } else if (position == clearPasscodesRow || position == setPanicCodeRow || position == removePanicCodeRow) {
-                return TYPE_SETTINGS;
-            } else if (position == showInSettingsRow) {
-                return TYPE_CHECK;
-            } else if (position == accountsStartRow || position == panicCodeRow) {
-                return TYPE_HEADER;
-            } else if (position == showInSettings2Row || position == accountsEndRow || position == panicCode2Row) {
-                return TYPE_INFO_PRIVACY;
-            } else if (position > accountsStartRow && position < accountsEndRow) {
-                return TYPE_ACCOUNT;
-            }
-            return TYPE_SETTINGS;
-        }
-    }
-
 }

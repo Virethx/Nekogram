@@ -45,6 +45,7 @@ public class UItem extends AdapterWithDiffUtils.Item {
     public boolean accent, red, transparent, locked;
     public int spanCount = MAX_SPAN_COUNT;
     public int parentSpanCount;
+    public String slug;
 
     public boolean include;
     public long dialogId;
@@ -255,6 +256,14 @@ public class UItem extends AdapterWithDiffUtils.Item {
         UItem i = new UItem(UniversalAdapter.VIEW_TYPE_CHECK, false);
         i.id = id;
         i.text = text;
+        return i;
+    }
+
+    public static UItem asCheck(int id, CharSequence text, CharSequence subtext) {
+        UItem i = new UItem(UniversalAdapter.VIEW_TYPE_CHECK, false);
+        i.id = id;
+        i.text = text;
+        i.subtext = subtext;
         return i;
     }
 
@@ -622,6 +631,11 @@ public class UItem extends AdapterWithDiffUtils.Item {
 
     public UItem accent() {
         this.accent = true;
+        return this;
+    }
+
+    public UItem slug(String slug) {
+        this.slug = slug;
         return this;
     }
 

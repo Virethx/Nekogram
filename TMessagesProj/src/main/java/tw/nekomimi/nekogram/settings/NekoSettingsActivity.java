@@ -4,20 +4,16 @@ import android.content.Context;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.browser.Browser;
-import org.telegram.ui.Cells.HeaderCell;
-import org.telegram.ui.Cells.TextCell;
-import org.telegram.ui.Cells.TextDetailSettingsCell;
-import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.UItem;
+import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.LaunchActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import tw.nekomimi.nekogram.accessibility.AccessibilitySettingsActivity;
@@ -29,28 +25,22 @@ import tw.nekomimi.nekogram.helpers.remote.UpdateHelper;
 public class NekoSettingsActivity extends BaseNekoSettingsActivity {
 
     private final List<ConfigHelper.News> news = ConfigHelper.getNews();
-    private boolean checkingUpdate = false;
 
-    private int categoriesRow;
-    private int generalRow;
-    private int appearanceRow;
-    private int chatRow;
-    private int passcodeRow;
-    private int experimentRow;
-    private int accessibilityRow;
-    private int categories2Row;
+    private final int generalRow = rowId++;
+    private final int appearanceRow = rowId++;
+    private final int chatRow = rowId++;
+    private final int passcodeRow = rowId++;
+    private final int experimentRow = rowId++;
+    private final int accessibilityRow = rowId++;
 
-    private int aboutRow;
-    private int channelRow;
-    private int websiteRow;
-    private int sourceCodeRow;
-    private int translationRow;
-    private int donateRow;
-    private int checkUpdateRow;
-    private int about2Row;
+    private final int channelRow = rowId++;
+    private final int websiteRow = rowId++;
+    private final int sourceCodeRow = rowId++;
+    private final int translationRow = rowId++;
+    private final int donateRow = rowId++;
+    private final int checkUpdateRow = rowId++;
 
-    private int sponsorRow;
-    private int sponsor2Row;
+    private final int sponsorRow = 100;
 
     @Override
     public View createView(Context context) {
@@ -58,54 +48,84 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
 
         actionBar.createMenu()
                 .addItem(0, R.drawable.cloud_sync)
-                .setOnClickListener(v -> CloudSettingsHelper.getInstance().showDialog(NekoSettingsActivity.this));
+                .setOnClickListener(v -> CloudSettingsHelper.getInstance().showDialog(this));
 
         return fragmentView;
     }
 
     @Override
-    protected void onItemClick(View view, int position, float x, float y) {
-        if (position == chatRow) {
-            presentFragment(new NekoChatSettingsActivity());
-        } else if (position == generalRow) {
-            presentFragment(new NekoGeneralSettingsActivity());
-        } else if (position == appearanceRow) {
-            presentFragment(new NekoAppearanceSettings());
-        } else if (position == passcodeRow) {
-            presentFragment(new NekoPasscodeSettingsActivity());
-        } else if (position == experimentRow) {
-            presentFragment(new NekoExperimentalSettingsActivity());
-        } else if (position == accessibilityRow) {
-            presentFragment(new AccessibilitySettingsActivity());
-        } else if (position == channelRow) {
-            getMessagesController().openByUserName(LocaleController.getString(R.string.OfficialChannelUsername), this, 1);
-        } else if (position == donateRow) {
-            presentFragment(new NekoDonateActivity());
-        } else if (position == translationRow) {
-            Browser.openUrl(getParentActivity(), "https://neko.crowdin.com/nekogram");
-        } else if (position == websiteRow) {
-            Browser.openUrl(getParentActivity(), "https://nekogram.app");
-        } else if (position == sourceCodeRow) {
-            Browser.openUrl(getParentActivity(), "https://github.com/Nekogram/Nekogram");
-        } else if (position == checkUpdateRow) {
-            ((LaunchActivity) getParentActivity()).checkAppUpdate(true, new Browser.Progress() {
-                @Override
-                public void end() {
-                    checkingUpdate = false;
-                    listAdapter.notifyItemChanged(checkUpdateRow);
-                }
-            });
-            checkingUpdate = true;
-            listAdapter.notifyItemChanged(checkUpdateRow);
-        } else if (position >= sponsorRow && position < sponsor2Row) {
-            ConfigHelper.News item = news.get(position - sponsorRow);
-            Browser.openUrl(getParentActivity(), item.url);
+    protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
+        items.add(UItem.asHeader(LocaleController.getString(R.string.Categories)));
+        items.add(UItem.asButton(generalRow, R.drawable.msg_media, LocaleController.getString(R.string.General)).slug("general"));
+        items.add(UItem.asButton(appearanceRow, R.drawable.msg_theme, LocaleController.getString(R.string.ChangeChannelNameColor2)).slug("appearance"));
+        items.add(UItem.asButton(chatRow, R.drawable.msg_discussion, LocaleController.getString(R.string.Chat)).slug("chat"));
+        if (!PasscodeHelper.isSettingsHidden()) {
+            items.add(UItem.asButton(passcodeRow, R.drawable.msg_secret, LocaleController.getString(R.string.PasscodeNeko)).slug("passcode"));
+        }
+        items.add(UItem.asButton(experimentRow, R.drawable.msg_fave, LocaleController.getString(R.string.NotificationsOther)).slug("experiment"));
+        AccessibilityManager am = (AccessibilityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        if (am != null && am.isTouchExplorationEnabled()) {
+            items.add(UItem.asButton(accessibilityRow, LocaleController.getString(R.string.AccessibilitySettings)).slug("accessibility"));
+        }
+        items.add(UItem.asShadow(null));
+
+        items.add(UItem.asHeader(LocaleController.getString(R.string.About)));
+        items.add(TextSettingsCellFactory.of(channelRow, LocaleController.getString(R.string.OfficialChannel), "@" + LocaleController.getString(R.string.OfficialChannelUsername)).slug("channel"));
+        items.add(TextSettingsCellFactory.of(websiteRow, LocaleController.getString(R.string.OfficialSite), "nekogram.app").slug("website"));
+        items.add(TextSettingsCellFactory.of(sourceCodeRow, LocaleController.getString(R.string.ViewSourceCode), "GitHub").slug("sourceCode"));
+        items.add(TextDetailSettingsCellFactory.of(translationRow, LocaleController.getString(R.string.Translation), LocaleController.getString(R.string.TranslationAbout)).slug("translation"));
+        items.add(TextDetailSettingsCellFactory.of(donateRow, LocaleController.getString(R.string.Donate), LocaleController.getString(R.string.DonateAbout)).slug("donate"));
+        items.add(TextDetailSettingsCellFactory.of(checkUpdateRow, LocaleController.getString(R.string.CheckUpdate), UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime)).slug("checkUpdate"));
+        items.add(UItem.asShadow(null));
+
+        if (!news.isEmpty()) {
+            var newsId = 0;
+            for (var newsItem : news) {
+                items.add(TextDetailSettingsCellFactory.of(sponsorRow + newsId++, newsItem.title, newsItem.summary));
+            }
+            items.add(UItem.asShadow(null));
         }
     }
 
     @Override
-    protected BaseListAdapter createAdapter(Context context) {
-        return new ListAdapter(context);
+    protected void onItemClick(UItem item, View view, int position, float x, float y) {
+        var id = item.id;
+        if (id == chatRow) {
+            presentFragment(new NekoChatSettingsActivity());
+        } else if (id == generalRow) {
+            presentFragment(new NekoGeneralSettingsActivity());
+        } else if (id == appearanceRow) {
+            presentFragment(new NekoAppearanceSettingsActivity());
+        } else if (id == passcodeRow) {
+            presentFragment(new NekoPasscodeSettingsActivity());
+        } else if (id == experimentRow) {
+            presentFragment(new NekoExperimentalSettingsActivity());
+        } else if (id == accessibilityRow) {
+            presentFragment(new AccessibilitySettingsActivity());
+        } else if (id == channelRow) {
+            getMessagesController().openByUserName(LocaleController.getString(R.string.OfficialChannelUsername), this, 1);
+        } else if (id == donateRow) {
+            presentFragment(new NekoDonateActivity());
+        } else if (id == translationRow) {
+            Browser.openUrl(getParentActivity(), "https://neko.crowdin.com/nekogram");
+        } else if (id == websiteRow) {
+            Browser.openUrl(getParentActivity(), "https://nekogram.app");
+        } else if (id == sourceCodeRow) {
+            Browser.openUrl(getParentActivity(), "https://github.com/Nekogram/Nekogram");
+        } else if (id == checkUpdateRow) {
+            ((LaunchActivity) getParentActivity()).checkAppUpdate(true, new Browser.Progress() {
+                @Override
+                public void end() {
+                    item.subtext = UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime);
+                    listView.adapter.notifyItemChanged(position);
+                }
+            });
+            item.subtext = LocaleController.getString(R.string.CheckingUpdate);
+            listView.adapter.notifyItemChanged(position);
+        } else if (id >= sponsorRow) {
+            var newsItem = news.get(id - sponsorRow);
+            Browser.openUrl(getParentActivity(), newsItem.url);
+        }
     }
 
     @Override
@@ -116,131 +136,5 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
     @Override
     protected String getKey() {
         return "";
-    }
-
-    @Override
-    protected void updateRows() {
-        super.updateRows();
-
-        categoriesRow = addRow("categories");
-        generalRow = addRow("general");
-        appearanceRow = addRow("appearance");
-        chatRow = addRow("chat");
-        if (!PasscodeHelper.isSettingsHidden()) {
-            passcodeRow = addRow("passcode");
-        } else {
-            passcodeRow = -1;
-        }
-        experimentRow = addRow("experiment");
-        AccessibilityManager am = (AccessibilityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        if (am != null && am.isTouchExplorationEnabled()) {
-            accessibilityRow = addRow("accessibility");
-        } else {
-            accessibilityRow = -1;
-        }
-        categories2Row = addRow();
-
-        aboutRow = addRow("about");
-        channelRow = addRow("channel");
-        websiteRow = addRow("website");
-        sourceCodeRow = addRow("sourceCode");
-        translationRow = addRow("translation");
-        donateRow = addRow("donate");
-        checkUpdateRow = addRow("checkUpdate");
-        about2Row = addRow();
-
-        if (!news.isEmpty()) {
-            sponsorRow = addRow();
-            rowCount += news.size() - 1;
-            sponsor2Row = addRow();
-        } else {
-            sponsorRow = -1;
-            sponsor2Row = -1;
-        }
-    }
-
-    private class ListAdapter extends BaseListAdapter {
-
-        public ListAdapter(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial, boolean divider) {
-            switch (holder.getItemViewType()) {
-                case TYPE_SETTINGS: {
-                    TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
-                    if (position == channelRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.OfficialChannel), "@" + LocaleController.getString(R.string.OfficialChannelUsername), divider);
-                    } else if (position == websiteRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.OfficialSite), "nekogram.app", divider);
-                    } else if (position == sourceCodeRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.ViewSourceCode), "GitHub", divider);
-                    }
-                    break;
-                }
-                case TYPE_HEADER: {
-                    HeaderCell headerCell = (HeaderCell) holder.itemView;
-                    if (position == categoriesRow) {
-                        headerCell.setText(LocaleController.getString(R.string.Categories));
-                    } else if (position == aboutRow) {
-                        headerCell.setText(LocaleController.getString(R.string.About));
-                    }
-                    break;
-                }
-                case TYPE_DETAIL_SETTINGS: {
-                    TextDetailSettingsCell textCell = (TextDetailSettingsCell) holder.itemView;
-                    textCell.setMultilineDetail(true);
-                    if (position == translationRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.Translation), LocaleController.getString(R.string.TranslationAbout), divider);
-                    } else if (position == donateRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.Donate), LocaleController.getString(R.string.DonateAbout), divider);
-                    } else if (position == checkUpdateRow) {
-                        textCell.setTextAndValue(LocaleController.getString(R.string.CheckUpdate),
-                                checkingUpdate ? LocaleController.getString(R.string.CheckingUpdate) :
-                                        UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime), divider);
-                    } else if (position >= sponsorRow && position < sponsor2Row) {
-                        ConfigHelper.News item = news.get(position - sponsorRow);
-                        textCell.setTextAndValue(item.title, item.summary, divider);
-                    }
-                    break;
-                }
-                case TYPE_TEXT: {
-                    TextCell textCell = (TextCell) holder.itemView;
-                    if (position == chatRow) {
-                        textCell.setTextAndIcon(LocaleController.getString(R.string.Chat), R.drawable.msg_discussion, divider);
-                    } else if (position == generalRow) {
-                        textCell.setTextAndIcon(LocaleController.getString(R.string.General), R.drawable.msg_media, divider);
-                    } else if (position == appearanceRow) {
-                        textCell.setTextAndIcon(LocaleController.getString(R.string.ChangeChannelNameColor2), R.drawable.msg_theme, divider);
-                    } else if (position == passcodeRow) {
-                        textCell.setTextAndIcon(LocaleController.getString(R.string.PasscodeNeko), R.drawable.msg_secret, divider);
-                    } else if (position == experimentRow) {
-                        textCell.setTextAndIcon(LocaleController.getString(R.string.NotificationsOther), R.drawable.msg_fave, divider);
-                    } else if (position == accessibilityRow) {
-                        textCell.setText(LocaleController.getString(R.string.AccessibilitySettings), divider);
-                    }
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            if (position >= sponsorRow && position < sponsor2Row) {
-                return TYPE_DETAIL_SETTINGS;
-            } else if (position == categories2Row || position == about2Row || position == sponsor2Row) {
-                return TYPE_SHADOW;
-            } else if (position >= channelRow && position < translationRow) {
-                return TYPE_SETTINGS;
-            } else if (position == categoriesRow || position == aboutRow) {
-                return TYPE_HEADER;
-            } else if (position >= translationRow && position < about2Row) {
-                return TYPE_DETAIL_SETTINGS;
-            } else if (position > categoriesRow && position < categories2Row) {
-                return TYPE_TEXT;
-            }
-            return TYPE_SETTINGS;
-        }
     }
 }

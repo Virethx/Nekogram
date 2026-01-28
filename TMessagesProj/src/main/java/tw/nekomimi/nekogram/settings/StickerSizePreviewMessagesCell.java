@@ -19,15 +19,14 @@ import androidx.annotation.NonNull;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.TLRPC;
-import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
 import org.telegram.ui.Components.BackgroundGradientDrawable;
-import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.MotionBackgroundDrawable;
 import org.telegram.ui.Stories.recorder.HintView2;
@@ -40,16 +39,13 @@ public class StickerSizePreviewMessagesCell extends LinearLayout {
 
     private BackgroundGradientDrawable.Disposable backgroundGradientDisposable;
 
-    private final FrameLayout fragmentView;
+    private FrameLayout fragmentView;
     private final ChatMessageCell[] cells = new ChatMessageCell[2];
     private final MessageObject[] messageObjects = new MessageObject[2];
     private final Drawable shadowDrawable;
 
-    public StickerSizePreviewMessagesCell(Context context, BaseFragment fragment) {
+    public StickerSizePreviewMessagesCell(Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context);
-
-        var resourcesProvider = fragment.getResourceProvider();
-        fragmentView = (FrameLayout) fragment.getFragmentView();
 
         setWillNotDraw(false);
         setOrientation(LinearLayout.VERTICAL);
@@ -126,7 +122,7 @@ public class StickerSizePreviewMessagesCell extends LinearLayout {
 
                 @Override
                 public void didPressImage(ChatMessageCell cell, float x, float y, boolean fullPreview) {
-                    BulletinFactory.of(fragment).createErrorBulletin(LocaleController.getString(R.string.Nya), resourcesProvider).show();
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.showBulletin, Bulletin.TYPE_ERROR, LocaleController.getString(R.string.Nya));
                 }
 
                 @Override
@@ -139,6 +135,10 @@ public class StickerSizePreviewMessagesCell extends LinearLayout {
             cells[a].setMessageObject(messageObjects[a], null, false, false, false);
             addView(cells[a], LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
         }
+    }
+
+    public void setFragmentView(FrameLayout view) {
+        this.fragmentView = view;
     }
 
     private HintView2 timeHint;
@@ -167,7 +167,7 @@ public class StickerSizePreviewMessagesCell extends LinearLayout {
         fragmentView.post(() -> {
             var loc = new int[2];
             cell.getLocationInWindow(loc);
-            timeHint.setTranslationY(loc[1] - timeHint.getTop() - ActionBar.getCurrentActionBarHeight() - AndroidUtilities.statusBarHeight - dp(120) + cell.getTimeY());
+            timeHint.setTranslationY(loc[1] - timeHint.getTop() - dp(120) + cell.getTimeY());
             timeHint.setJointPx(0, -dp(16) + loc[0] + cell.timeX + cell.timeWidth - cell.timeTextWidth / 2f + cell.signWidth / 2f);
             timeHint.show();
         });
