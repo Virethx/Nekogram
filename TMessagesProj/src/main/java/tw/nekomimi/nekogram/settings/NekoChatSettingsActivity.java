@@ -137,7 +137,7 @@ public class NekoChatSettingsActivity extends BaseNekoSettingsActivity implement
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
-        items.add(StickerSizeCellFactory.of(stickerSizeRow, NekoConfig.stickerSize, progress -> {
+        items.add(StickerSizeCellFactory.of(stickerSizeRow, LocaleController.getString(R.string.StickerSize), NekoConfig.stickerSize, progress -> {
             NekoConfig.setStickerSize(progress);
             if (progress != 14.0f && resetItem.getVisibility() != View.VISIBLE) {
                 AndroidUtilities.updateViewVisibilityAnimated(resetItem, true, 0.5f, true);
@@ -522,9 +522,10 @@ public class NekoChatSettingsActivity extends BaseNekoSettingsActivity implement
             cell.setOnDragListener((AltSeekbar.OnDrag) item.object);
         }
 
-        public static UItem of(int id, float value, AltSeekbar.OnDrag onDrag) {
+        public static UItem of(int id, String title, float value, AltSeekbar.OnDrag onDrag) {
             var item = UItem.ofFactory(StickerSizeCellFactory.class);
             item.id = id;
+            item.text = title;
             item.object = onDrag;
             item.floatValue = value;
             return item;

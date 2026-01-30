@@ -57,7 +57,7 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         items.add(UItem.asHeader(LocaleController.getString(R.string.ChangeChannelNameColor2)));
-        items.add(EmojiSetCellFactory.of(emojiSetsRow).slug("emojiSets"));
+        items.add(EmojiSetCellFactory.of(emojiSetsRow, LocaleController.getString(R.string.EmojiSets)).slug("emojiSets"));
         items.add(UItem.asCheck(mediaPreviewRow, LocaleController.getString(R.string.MediaPreview)).slug("mediaPreview").setChecked(NekoConfig.mediaPreview));
         items.add(UItem.asCheck(predictiveBackAnimationRow, LocaleController.getString(R.string.PredictiveBackAnimation)).slug("predictiveBackAnimation").setChecked(NekoConfig.predictiveBackAnimation));
         items.add(UItem.asCheck(appBarShadowRow, LocaleController.getString(R.string.DisableAppBarShadow)).slug("appBarShadow").setChecked(NekoConfig.disableAppBarShadow));
@@ -205,9 +205,10 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
             cell.setData(newPack, pack != null && !pack.getPackId().equals(newPack.getPackId()), divider);
         }
 
-        public static UItem of(int id) {
+        public static UItem of(int id, String title) {
             var item = UItem.ofFactory(EmojiSetCellFactory.class);
             item.id = id;
+            item.text = title;
             return item;
         }
     }
