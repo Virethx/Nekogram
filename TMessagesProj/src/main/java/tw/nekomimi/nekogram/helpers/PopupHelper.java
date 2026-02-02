@@ -24,6 +24,7 @@ import org.telegram.ui.Cells.RadioColorCell;
 import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ItemOptions;
+import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.List;
 
@@ -60,6 +61,10 @@ public class PopupHelper {
                 return;
             }
             var popup = ItemOptions.makeOptions(container, resourcesProvider, itemView);
+            var parent = itemView.getParent();
+            if (parent instanceof RecyclerListView listView) {
+                popup.setScrimViewBackground(listView.getClipBackground(itemView));
+            }
             popup.setGravity(LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT);
             for (int i = 0; i < entries.size(); i++) {
                 var entry = entries.get(i);

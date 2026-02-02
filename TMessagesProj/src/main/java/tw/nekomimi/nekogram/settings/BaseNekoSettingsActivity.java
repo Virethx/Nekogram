@@ -1,5 +1,6 @@
 package tw.nekomimi.nekogram.settings;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,7 +14,6 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +33,7 @@ import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
@@ -45,7 +46,6 @@ import org.telegram.ui.Components.blur3.DownscaleScrollableNoiseSuppressor;
 import org.telegram.ui.Components.blur3.ViewGroupPartRenderer;
 import org.telegram.ui.Components.blur3.capture.IBlur3Capture;
 import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceRenderNode;
-import org.telegram.ui.HeaderShadowView;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -58,8 +58,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     protected UniversalRecyclerView listView;
     protected LinearLayoutManager layoutManager;
     protected Theme.ResourcesProvider resourcesProvider;
-    private View actionBarBackground;
-    private HeaderShadowView headerShadowView;
+    protected View actionBarBackground;
 
     protected int rowId = 1;
 
@@ -144,7 +143,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             var key = getKey();
             if (key != null && item.enabled && !TextUtils.isEmpty(slug)) {
                 ItemOptions.makeOptions(this, view)
-                        .setScrimViewBackground(new ColorDrawable(getThemedColor(Theme.key_windowBackgroundWhite)))
+                        .setScrimViewBackground(listView.getClipBackground(view))
                         .add(R.drawable.msg_copy, LocaleController.getString(R.string.CopyLink), () -> {
                             if ("copyReportId".equals(slug)) {
                                 AndroidUtilities.addToClipboard(String.format(Locale.getDefault(), "https://%s/nekosettings/%s", getMessagesController().linkPrefix, "reportId"));
@@ -167,12 +166,11 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
                 return BaseNekoSettingsActivity.this.getSelectorColor(position);
             }
         };
+        listView.adapter.setApplyBackground(false);
         listView.setClipToPadding(false);
         listView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                headerShadowView.setShadowVisible(listView.canScrollVertically(-1), true);
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && scrollableViewNoiseSuppressor != null) {
                     scrollableViewNoiseSuppressor.onScrolled(dx, dy);
                     blur3_InvalidateBlur();
@@ -193,18 +191,76 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
                 AndroidUtilities.rectTmp2.set(0, 0, getMeasuredWidth(), top);
                 blurScrimPaint.setColor(Theme.getColor(Theme.key_actionBarDefault, resourceProvider));
                 contentView.drawBlurRect(canvas, 0, AndroidUtilities.rectTmp2, blurScrimPaint, true);
+                if (getParentLayout() != null) {
+                    getParentLayout().drawHeaderShadow(canvas, top);
+                }
             }
         };
         contentView.addView(actionBarBackground, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 200, Gravity.TOP));
         contentView.addView(actionBar, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.FILL_HORIZONTAL | Gravity.TOP));
 
-        headerShadowView = new HeaderShadowView(context, parentLayout);
-        headerShadowView.setShadowVisible(false, false);
-        contentView.addView(headerShadowView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 5, Gravity.TOP));
-
         listView.adapter.update(false);
+
+        listView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                updateActionBarVisible();
+            }
+        });
+
+        updateActionBarVisible(true, false);
+
         return fragmentView = contentView;
     }
+
+    protected boolean isSearchFieldVisible() {
+        return false;
+    }
+
+    private boolean actionBarVisible;
+    private ValueAnimator actionBarVisibleAnimator;
+
+    protected void updateActionBarVisible() {
+        updateActionBarVisible(false, true);
+    }
+
+    private void updateActionBarVisible(boolean force, boolean animated) {
+        final boolean visible;
+        if (isSearchFieldVisible()) {
+            visible = true;
+        } else if (listView.getChildCount() > 0) {
+            var firstChild = listView.getChildAt(0);
+            visible = needActionBarPadding() ? listView.canScrollVertically(-1) : (
+                    listView.getChildAdapterPosition(firstChild) > 0 ||
+                            firstChild.getY() + firstChild.getHeight() < actionBar.getHeight()
+            );
+        } else {
+            visible = false;
+        }
+        if (actionBarVisible == visible && !force) return;
+
+        actionBarVisible = visible;
+        if (actionBarVisibleAnimator != null) {
+            actionBarVisibleAnimator.cancel();
+            actionBarVisibleAnimator = null;
+        }
+        if (!animated) {
+            if (!needActionBarPadding())
+                actionBar.getTitlesContainer().setAlpha(visible ? 1.0f : 0.0f);
+            actionBarBackground.setAlpha(visible ? 1.0f : 0.0f);
+        } else {
+            actionBarVisibleAnimator = ValueAnimator.ofFloat(actionBarBackground.getAlpha(), visible ? 1.0f : 0.0f);
+            actionBarVisibleAnimator.addUpdateListener(a -> {
+                final float t = (float) a.getAnimatedValue();
+                if (!needActionBarPadding()) actionBar.getTitlesContainer().setAlpha(t);
+                actionBarBackground.setAlpha(t);
+            });
+            actionBarVisibleAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+            actionBarVisibleAnimator.setDuration(420);
+            actionBarVisibleAnimator.start();
+        }
+    }
+
 
     @Override
     public void setParentLayout(INavigationLayout layout) {
@@ -219,6 +275,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
         var actionBar = super.createActionBar(context);
         actionBar.setBackgroundColor(Color.TRANSPARENT);
         actionBar.setAddToContainer(false);
+        actionBar.setUseContainerForTitles();
         actionBar.setOccupyStatusBar(!AndroidUtilities.isTablet());
         actionBar.setTitle(getActionBarTitle());
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
@@ -249,6 +306,10 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
 
     public Integer getSelectorColor(int position) {
         return getThemedColor(Theme.key_listSelector);
+    }
+
+    protected boolean needActionBarPadding() {
+        return true;
     }
 
     protected void showRestartBulletin() {
@@ -316,8 +377,7 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
 
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, actionBar.getMeasuredHeight(), 0, bottom);
-        ((ViewGroup.MarginLayoutParams) headerShadowView.getLayoutParams()).topMargin = actionBar.getMeasuredHeight();
+        listView.setPadding(0, needActionBarPadding() ? actionBar.getMeasuredHeight() : (top + AndroidUtilities.dp(12)), 0, bottom);
         super.onInsets(left, top, right, bottom);
     }
 

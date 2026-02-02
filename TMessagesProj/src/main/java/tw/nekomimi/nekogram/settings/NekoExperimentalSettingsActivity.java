@@ -11,7 +11,9 @@ import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.Utilities;
+import org.telegram.messenger.browser.Browser;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
 import org.telegram.ui.ActionBar.AlertDialog;
@@ -19,6 +21,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
+import org.telegram.ui.LaunchActivity;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -28,6 +31,7 @@ import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.helpers.AnalyticsHelper;
 import tw.nekomimi.nekogram.helpers.PopupHelper;
 import tw.nekomimi.nekogram.helpers.SettingsHelper;
+import tw.nekomimi.nekogram.helpers.remote.UpdateHelper;
 
 public class NekoExperimentalSettingsActivity extends BaseNekoSettingsActivity {
 
@@ -38,6 +42,8 @@ public class NekoExperimentalSettingsActivity extends BaseNekoSettingsActivity {
     private final int mapDriftingFixRow = rowId++;
     private final int contentRestrictionRow = rowId++;
     private final int showRPCErrorRow = rowId++;
+
+    private final int checkUpdateRow = rowId++;
 
     private final int sendBugReportRow = rowId++;
     private final int deleteDataRow = rowId++;
@@ -65,6 +71,9 @@ public class NekoExperimentalSettingsActivity extends BaseNekoSettingsActivity {
             items.add(UItem.asCheck(contentRestrictionRow, LocaleController.getString(R.string.IgnoreContentRestriction)).slug("contentRestriction").setChecked(NekoConfig.ignoreContentRestriction));
         }
         items.add(UItem.asCheck(showRPCErrorRow, LocaleController.getString(R.string.ShowRPCError), LocaleController.formatString(R.string.ShowRPCErrorException, "FILE_REFERENCE_EXPIRED")).slug("showRPCError").setChecked(NekoConfig.showRPCError));
+        items.add(UItem.asShadow(null));
+
+        items.add(TextDetailSettingsCellFactory.of(checkUpdateRow, LocaleController.getString(R.string.CheckUpdate), UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime)).slug("checkUpdate"));
         items.add(UItem.asShadow(null));
 
         if (AnalyticsHelper.isSettingsAvailable()) {
@@ -245,6 +254,16 @@ public class NekoExperimentalSettingsActivity extends BaseNekoSettingsActivity {
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(NekoConfig.keepFormatting);
             }
+        } else if (id == checkUpdateRow) {
+            ((LaunchActivity) getParentActivity()).checkAppUpdate(true, new Browser.Progress() {
+                @Override
+                public void end() {
+                    item.subtext = UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime);
+                    listView.adapter.notifyItemChanged(position);
+                }
+            });
+            item.subtext = LocaleController.getString(R.string.CheckingUpdate);
+            listView.adapter.notifyItemChanged(position);
         }
     }
 

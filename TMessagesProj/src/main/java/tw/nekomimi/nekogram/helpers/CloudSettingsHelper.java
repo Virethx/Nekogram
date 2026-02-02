@@ -108,7 +108,7 @@ public class CloudSettingsHelper {
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-        ButtonWithCounterView buttonTextView = new ButtonWithCounterView(context, true, resourcesProvider);
+        ButtonWithCounterView buttonTextView = new ButtonWithCounterView(context, true, resourcesProvider).setRound();
         buttonTextView.setText(LocaleController.getString(R.string.CloudConfigSync), false);
         linearLayout.addView(buttonTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 16, 0, 16, 0));
         buttonTextView.setOnClickListener(view -> {
@@ -125,7 +125,7 @@ public class CloudSettingsHelper {
             });
         });
 
-        ButtonWithCounterView textView = new ButtonWithCounterView(context, false, resourcesProvider);
+        ButtonWithCounterView textView = new ButtonWithCounterView(context, false, resourcesProvider).setRound();
         textView.setText(LocaleController.getString(R.string.CloudConfigRestore), false);
         linearLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 16, 8, 16, 0));
         textView.setOnClickListener(view -> {
@@ -286,7 +286,7 @@ public class CloudSettingsHelper {
 
             ScaleStateListAnimator.apply(this, .02f, 1.2f);
 
-            setForeground(Theme.createRadSelectorDrawable(Theme.multAlpha(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), .10f), 8, 8));
+            setForeground(Theme.createRadSelectorDrawable(Theme.multAlpha(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider), .10f), 22, 22));
 
             LinearLayout linearLayout = new LinearLayout(context);
             linearLayout.setOrientation(LinearLayout.VERTICAL);

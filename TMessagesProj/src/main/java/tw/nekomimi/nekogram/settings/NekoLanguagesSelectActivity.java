@@ -89,7 +89,7 @@ public class NekoLanguagesSelectActivity extends BaseNekoSettingsActivity {
         FrameLayout fragmentView = (FrameLayout) super.createView(context);
 
         var menu = actionBar.createMenu();
-        var item = menu.addItem(0, R.drawable.ic_ab_search).setIsSearchField(true).setActionBarMenuItemSearchListener(new ActionBarMenuItem.ActionBarMenuItemSearchListener() {
+        var item = menu.addItem(0, R.drawable.outline_header_search).setIsSearchField(true).setActionBarMenuItemSearchListener(new ActionBarMenuItem.ActionBarMenuItemSearchListener() {
 
             @Override
             public void onSearchCollapse() {

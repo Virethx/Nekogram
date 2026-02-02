@@ -671,6 +671,13 @@ public class UniversalAdapter extends AdapterWithDiffUtils {
                         cell.setTextAndValueAndIcon(item.text, item.textValue, item.iconResId, divider);
                     }
                 }
+                if (!TextUtils.isEmpty(item.subtext)) {
+                    cell.setSubtitle(item.subtext);
+                    cell.heightDp = 60;
+                } else {
+                    cell.setSubtitle(null);
+                    cell.heightDp = 50;
+                }
                 if (item.accent) {
                     cell.setColors(Theme.key_windowBackgroundWhiteBlueText4, Theme.key_windowBackgroundWhiteBlueText4);
                 } else if (item.red) {

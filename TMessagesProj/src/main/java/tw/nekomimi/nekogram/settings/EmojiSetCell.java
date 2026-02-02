@@ -125,6 +125,7 @@ public class EmojiSetCell extends FrameLayout {
                 setPackPreview(emojiPackInfo);
             }
         }
+        setWillNotDraw(!divider);
     }
 
     private void setPackPreview(EmojiHelper.EmojiPack pack) {

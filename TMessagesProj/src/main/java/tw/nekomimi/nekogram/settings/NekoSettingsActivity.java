@@ -7,30 +7,39 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+import androidx.appcompat.content.res.AppCompatResources;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.browser.Browser;
+import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.SettingsSearchCell;
+import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.FragmentFloatingButton;
+import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
-import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.ProfileActivity.SearchAdapter.SearchResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
@@ -38,7 +47,6 @@ import tw.nekomimi.nekogram.accessibility.AccessibilitySettingsActivity;
 import tw.nekomimi.nekogram.helpers.CloudSettingsHelper;
 import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 import tw.nekomimi.nekogram.helpers.remote.ConfigHelper;
-import tw.nekomimi.nekogram.helpers.remote.UpdateHelper;
 
 public class NekoSettingsActivity extends BaseNekoSettingsActivity implements FactorAnimator.Target {
 
@@ -61,7 +69,6 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
     private final int sourceCodeRow = rowId++;
     private final int translationRow = rowId++;
     private final int donateRow = rowId++;
-    private final int checkUpdateRow = rowId++;
 
     private final int sponsorRow = 100;
 
@@ -73,8 +80,38 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
     private Runnable searchRunnable;
     private String lastSearchString;
 
+    private FrameLayout topView;
+
     @Override
     public View createView(Context context) {
+        topView = new FrameLayout(context);
+
+        var logoContainer = new FrameLayout(context);
+        var logoView = new BackupImageView(context);
+
+        logoView.setImageDrawable(AppCompatResources.getDrawable(context, R.mipmap.ic_launcher));
+        logoContainer.addView(logoView, LayoutHelper.createFrame(90, 90, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 15, 0, 0));
+        topView.addView(logoContainer, LayoutHelper.createFrame(120, 120, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 23 - 12, 0, 0));
+
+        var titleView = new TextView(context);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 22);
+        titleView.setTypeface(AndroidUtilities.bold());
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setSingleLine();
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        titleView.setText(LocaleController.getString(R.string.AppNameNeko));
+        titleView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+        topView.addView(titleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 138.333f - 12, 0, 0));
+
+        var subtitleView = new TextView(context);
+        subtitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+        subtitleView.setGravity(Gravity.CENTER);
+        subtitleView.setSingleLine();
+        subtitleView.setEllipsize(TextUtils.TruncateAt.END);
+        subtitleView.setText(String.format(Locale.US, "%s (%d)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE));
+        subtitleView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText));
+        topView.addView(subtitleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 168 - 12, 0, 0));
+
         var fragmentView = super.createView(context);
 
         var menu = actionBar.createMenu();
@@ -83,6 +120,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
             @Override
             public void onSearchCollapse() {
                 animatorSearchPageVisible.setValue(false, true);
+                updateActionBarVisible();
                 listView.adapter.update(true);
             }
 
@@ -90,6 +128,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
             public void onSearchExpand() {
                 animatorSearchPageVisible.setValue(true, true);
                 search("");
+                updateActionBarVisible();
                 listView.adapter.update(true);
             }
 
@@ -107,13 +146,25 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
     }
 
     @Override
+    protected boolean needActionBarPadding() {
+        return false;
+    }
+
+    @Override
+    protected boolean isSearchFieldVisible() {
+        return searchItem != null && searchItem.isSearchFieldVisible2();
+    }
+
+    @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         if (searchItem != null && searchItem.isSearchFieldVisible2()) {
+            items.add(UItem.asSpace(ActionBar.getCurrentActionBarHeight()));
             fillSearchItems(items);
             return;
         }
 
-        items.add(UItem.asHeader(LocaleController.getString(R.string.Categories)));
+        items.add(UItem.asCustomShadow(topView, 200 - 12));
+
         items.add(UItem.asButton(generalRow, R.drawable.msg_media, LocaleController.getString(R.string.General)).slug("general"));
         items.add(UItem.asButton(appearanceRow, R.drawable.msg_theme, LocaleController.getString(R.string.ChangeChannelNameColor2)).slug("appearance"));
         items.add(UItem.asButton(chatRow, R.drawable.msg_discussion, LocaleController.getString(R.string.Chat)).slug("chat"));
@@ -127,13 +178,11 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
         }
         items.add(UItem.asShadow(null));
 
-        items.add(UItem.asHeader(LocaleController.getString(R.string.About)));
-        items.add(TextSettingsCellFactory.of(channelRow, LocaleController.getString(R.string.OfficialChannel), "@" + LocaleController.getString(R.string.OfficialChannelUsername)).slug("channel"));
-        items.add(TextSettingsCellFactory.of(websiteRow, LocaleController.getString(R.string.OfficialSite), "nekogram.app").slug("website"));
-        items.add(TextSettingsCellFactory.of(sourceCodeRow, LocaleController.getString(R.string.ViewSourceCode), "GitHub").slug("sourceCode"));
-        items.add(TextDetailSettingsCellFactory.of(translationRow, LocaleController.getString(R.string.Translation), LocaleController.getString(R.string.TranslationAbout)).slug("translation"));
-        items.add(TextDetailSettingsCellFactory.of(donateRow, LocaleController.getString(R.string.Donate), LocaleController.getString(R.string.DonateAbout)).slug("donate"));
-        items.add(TextDetailSettingsCellFactory.of(checkUpdateRow, LocaleController.getString(R.string.CheckUpdate), UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime)).slug("checkUpdate"));
+        items.add(UItem.asButton(channelRow, R.drawable.msg_channel, LocaleController.getString(R.string.OfficialChannel), "@" + LocaleController.getString(R.string.OfficialChannelUsername)).slug("channel"));
+        items.add(UItem.asButton(websiteRow, R.drawable.msg_language, LocaleController.getString(R.string.OfficialSite), "nekogram.app").slug("website"));
+        items.add(UItem.asButton(sourceCodeRow, R.drawable.msg_link, LocaleController.getString(R.string.ViewSourceCode), "GitHub").slug("sourceCode"));
+        items.add(UItem.asButtonSubtext(translationRow, R.drawable.msg_translate, LocaleController.getString(R.string.Translation), LocaleController.getString(R.string.TranslationAbout)).slug("translation"));
+        items.add(UItem.asButtonSubtext(donateRow, R.drawable.msg_input_like, LocaleController.getString(R.string.Donate), LocaleController.getString(R.string.DonateAbout)).slug("donate"));
         items.add(UItem.asShadow(null));
 
         if (!news.isEmpty()) {
@@ -176,16 +225,6 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
             Browser.openUrl(getParentActivity(), "https://nekogram.app");
         } else if (id == sourceCodeRow) {
             Browser.openUrl(getParentActivity(), "https://github.com/Nekogram/Nekogram");
-        } else if (id == checkUpdateRow) {
-            ((LaunchActivity) getParentActivity()).checkAppUpdate(true, new Browser.Progress() {
-                @Override
-                public void end() {
-                    item.subtext = UpdateHelper.formatDateUpdate(SharedConfig.lastUpdateCheckTime);
-                    listView.adapter.notifyItemChanged(position);
-                }
-            });
-            item.subtext = LocaleController.getString(R.string.CheckingUpdate);
-            listView.adapter.notifyItemChanged(position);
         } else if (id >= sponsorRow) {
             var newsItem = news.get(id - sponsorRow);
             Browser.openUrl(getParentActivity(), newsItem.url);
