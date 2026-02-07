@@ -314,14 +314,7 @@
     <string name="ForceFontWeightFallback">フォントの太さのフォールバックを強制</string>
     <string name="HideChannelBottomButtons">チャンネル内の下部のボタンを非表示</string>
     <string name="TranslationKeepFormatting">翻訳時にテキストの書式を保持</string>
+    <string name="PredictiveBackAnimation">予測バックアニメーション</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">ユーザー補助の設定</string>
-    <string name="AccSeekbarHeading">シークバーの設定</string>
-    <string name="AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarHeading">このオプションを選択した場合、シークバーの値が変更された後に通知される時間をミリ秒単位で選択してください。</string>
-    <string name="AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbar">シークバーの値の変更を通知する前の遅延</string>
-    <string name="AccTimeBeforeAnnouncingOfChangingOfValueOfSeekbarWithoutDelay">遅延なし</string>
-    <string name="AccTimeBeforeAnnouncingOfChangesOfSeekbarValue">%s ms</string>
-    <string name="AccNumberOfItems">アイテム数を表示</string>
-    <string name="AccIndexOfItem">現在の位置を表示</string>
-    <string name="AccShowValueChanges">手動変更中に値の変化を通知</string>
 </resources>
