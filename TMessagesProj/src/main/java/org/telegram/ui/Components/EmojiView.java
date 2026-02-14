@@ -6685,6 +6685,11 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                             ((ChatActivity) fragment).openAttachMenuForCreatingSticker();
                         }
                     });
+                    containerLayout.setOnLongClickListener(v -> {
+                        NekoConfig.toggleMinimizedStickerCreator();
+                        checkDocuments(false);
+                        return true;
+                    });
 
                     final ImageView icon = new ImageView(context);
                     icon.setImageResource(R.drawable.menu_sticker_add);
@@ -6700,11 +6705,6 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                     containerLayout.addView(text, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 0, 3, 0, 0));
 
                     layout.addView(containerLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 8, 8, 8, 8));
-                    layout.setOnLongClickListener(v -> {
-                        NekoConfig.toggleMinimizedStickerCreator();
-                        checkDocuments(false);
-                        return true;
-                    });
                     view = layout;
                     break;
             }
