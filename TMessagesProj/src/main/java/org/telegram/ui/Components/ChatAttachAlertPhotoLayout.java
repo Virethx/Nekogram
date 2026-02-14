@@ -4793,11 +4793,13 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
 
         public void updateBitmap() {
             Bitmap bitmap = null;
-            try {
-                File file = new File(ApplicationLoader.getFilesDirFixed(), "cthumb.jpg");
-                bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-            } catch (Throwable ignore) {
+            if (!NekoConfig.disableInstantCamera) {
+                try {
+                    File file = new File(ApplicationLoader.getFilesDirFixed(), "cthumb.jpg");
+                    bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                } catch (Throwable ignore) {
 
+                }
             }
             if (bitmap != null) {
                 placeholderDrawable = new BitmapDrawable(getContext().getResources(), bitmap);
