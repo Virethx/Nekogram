@@ -6278,14 +6278,14 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         final float nameTextViewY = (1 - value) * (1 - value) * nameY + 2 * (1 - value) * value * nameTextViewCy + value * value * nameTextViewYEnd;
 
         final float onlineTextViewXEnd = AndroidUtilities.dpf2(16f) - ((FrameLayout.LayoutParams) onlineTextView[1].getLayoutParams()).leftMargin;
-        final float onlineTextViewYEnd = newTop + extraHeight - getActionsExtraHeight() - AndroidUtilities.dpf2(getActionsExtraHeight() > 0 ? 10f : 14f) - onlineTextView[1].getBottom();
+        final float onlineTextViewYEnd = newTop + extraHeight - getActionsExtraHeight() - AndroidUtilities.dpf2(10f) - onlineTextView[1].getBottom();
         final float onlineTextViewCx = kx + onlineX + (onlineTextViewXEnd - onlineX) / 2f;
         final float onlineTextViewCy = ky + onlineY + (onlineTextViewYEnd - onlineY) / 2f;
         final float onlineTextViewX = (1 - value) * (1 - value) * onlineX + 2 * (1 - value) * value * onlineTextViewCx + value * value * onlineTextViewXEnd;
         final float onlineTextViewY = (1 - value) * (1 - value) * onlineY + 2 * (1 - value) * value * onlineTextViewCy + value * value * onlineTextViewYEnd;
 
         final float idTextViewXEnd = AndroidUtilities.dpf2(16f) - ((FrameLayout.LayoutParams) idTextView.getLayoutParams()).leftMargin;
-        final float idTextViewYEnd = newTop + extraHeight - getActionsExtraHeight() - AndroidUtilities.dpf2(getActionsExtraHeight() == 0 ? -4 : -8) - idTextView.getBottom();
+        final float idTextViewYEnd = newTop + extraHeight - getActionsExtraHeight() - AndroidUtilities.dpf2(-8) - idTextView.getBottom();
         final float idTextViewCx = kx + idX + (idTextViewXEnd - idX) / 2f;
         final float idTextViewCy = ky + idY + (idTextViewYEnd - idY) / 2f;
         final float idTextViewX = (1 - value) * (1 - value) * idX + 2 * (1 - value) * value * idTextViewCx + value * value * idTextViewXEnd;
@@ -8445,9 +8445,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextView[1].setTranslationX(AndroidUtilities.dpf2(18f) - nameTextView[1].getLeft());
                         nameTextView[1].setTranslationY(newTop + h - getActionsExtraHeight() - dpf2(30f) - nameTextView[1].getBottom() + additionalTranslationY);
                         onlineTextView[1].setTranslationX(getOnlineTextViewTranslationXWithOffsets(dpf2(16) - onlineTextView[1].getLeft()));
-                        onlineTextView[1].setTranslationY(getOnlineTextViewTranslationYWithOffsets(newTop + h - getActionsExtraHeight() - dpf2(getActionsExtraHeight() > 0 ? 10 : 14) - onlineTextView[1].getBottom() + additionalTranslationY));
+                        onlineTextView[1].setTranslationY(getOnlineTextViewTranslationYWithOffsets(newTop + h - getActionsExtraHeight() - dpf2(10) - onlineTextView[1].getBottom() + additionalTranslationY));
                         idTextView.setTranslationX(dpf2(16f) - idTextView.getLeft());
-                        idTextView.setTranslationY(newTop + h - getActionsExtraHeight() - dpf2(getActionsExtraHeight() == 0 ? -4 : -8) - idTextView.getBottom() + additionalTranslationY);
+                        idTextView.setTranslationY(newTop + h - getActionsExtraHeight() - dpf2(-8) - idTextView.getBottom() + additionalTranslationY);
                         mediaCounterTextView.setTranslationX(onlineTextView[1].getTranslationX());
                         mediaCounterTextView.setTranslationY(onlineTextView[1].getTranslationY());
                         updateCollectibleHint();
