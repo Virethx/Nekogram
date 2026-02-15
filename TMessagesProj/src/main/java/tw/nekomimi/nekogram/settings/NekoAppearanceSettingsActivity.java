@@ -65,12 +65,6 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
         items.add(UItem.asCheck(formatTimeWithSecondsRow, LocaleController.getString(R.string.FormatWithSeconds)).slug("formatTimeWithSeconds").setChecked(NekoConfig.formatTimeWithSeconds));
         items.add(UItem.asCheck(disableNumberRoundingRow, LocaleController.getString(R.string.DisableNumberRounding), "4.8K -> 4777").slug("disableNumberRounding").setChecked(NekoConfig.disableNumberRounding));
         items.add(UItem.asCheck(hideBottomNavigationBarRow, LocaleController.getString(R.string.HideBottomNavigationBar)).setChecked(NekoConfig.hideBottomNavigationBar).slug("hideBottomNavigationBar"));
-        items.add(TextSettingsCellFactory.of(eventTypeRow, LocaleController.getString(R.string.EventType), switch (NekoConfig.eventType) {
-            case 1 -> LocaleController.getString(R.string.Christmas);
-            case 2 -> LocaleController.getString(R.string.Valentine);
-            case 3 -> LocaleController.getString(R.string.Halloween);
-            default -> LocaleController.getString(R.string.DependsOnDate);
-        }).slug("eventType"));
         items.add(TextSettingsCellFactory.of(tabletModeRow, LocaleController.getString(R.string.TabletMode), switch (NekoConfig.tabletMode) {
             case NekoConfig.TABLET_AUTO -> LocaleController.getString(R.string.TabletModeAuto);
             case NekoConfig.TABLET_ENABLE -> LocaleController.getString(R.string.Enable);
@@ -113,18 +107,6 @@ public class NekoAppearanceSettingsActivity extends BaseNekoSettingsActivity imp
             }, resourcesProvider);
         } else if (id == emojiSetsRow) {
             presentFragment(new NekoEmojiSettingsActivity());
-        } else if (id == eventTypeRow) {
-            ArrayList<String> arrayList = new ArrayList<>();
-            arrayList.add(LocaleController.getString(R.string.DependsOnDate));
-            arrayList.add(LocaleController.getString(R.string.Christmas));
-            arrayList.add(LocaleController.getString(R.string.Valentine));
-            arrayList.add(LocaleController.getString(R.string.Halloween));
-            PopupHelper.show(arrayList, LocaleController.getString(R.string.EventType), NekoConfig.eventType, getParentActivity(), view, i -> {
-                NekoConfig.setEventType(i);
-                item.textValue = arrayList.get(i);
-                listView.adapter.notifyItemChanged(position, PARTIAL);
-                getNotificationCenter().postNotificationName(NotificationCenter.mainUserInfoChanged);
-            }, resourcesProvider);
         } else if (id == disableNumberRoundingRow) {
             NekoConfig.toggleDisableNumberRounding();
             if (view instanceof TextCheckCell) {

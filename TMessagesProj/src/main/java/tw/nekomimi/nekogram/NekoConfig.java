@@ -110,7 +110,6 @@ public class NekoConfig {
     public static int tabletMode = TABLET_AUTO;
     public static boolean openArchiveOnPull = false;
     public static int nameOrder = 1;
-    public static int eventType = 0;
     public static boolean disableAppBarShadow = false;
     public static boolean mediaPreview = true;
     public static boolean autoPauseVideo = true;
@@ -181,7 +180,6 @@ public class NekoConfig {
             showMessageDetails = preferences.getBoolean("showMessageDetails", false);
             showTranslate = preferences.getBoolean("showTranslate", true);
             showRepeat = preferences.getBoolean("showRepeat", true);
-            eventType = preferences.getInt("eventType", 0);
             stickerSize = preferences.getFloat("stickerSize", 14.0f);
             translationProvider = preferences.getString("translationProvider2", isChineseUser ? Translator.PROVIDER_LINGO : Translator.PROVIDER_GOOGLE);
             openArchiveOnPull = preferences.getBoolean("openArchiveOnPull", false);
@@ -641,14 +639,6 @@ public class NekoConfig {
         SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("nameOrder", nameOrder);
-        editor.apply();
-    }
-
-    public static void setEventType(int type) {
-        eventType = type;
-        SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("eventType", eventType);
         editor.apply();
     }
 
