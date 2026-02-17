@@ -140,6 +140,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity implements Fa
         searchItem.setSearchFieldHint(getString(R.string.Search));
         searchItem.setContentDescription(getString(R.string.Search));
         syncItem = menu.addItem(1, R.drawable.cloud_sync);
+        syncItem.setContentDescription(LocaleController.getString(R.string.CloudConfig));
         syncItem.setOnClickListener(v -> CloudSettingsHelper.getInstance().showDialog(this));
 
         return fragmentView;
