@@ -281,6 +281,8 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
         actionBar.setUseContainerForTitles();
         actionBar.setOccupyStatusBar(!AndroidUtilities.isTablet());
         actionBar.setTitle(getActionBarTitle());
+        actionBar.setTitleColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+        actionBar.setItemsColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText), false);
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
