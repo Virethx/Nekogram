@@ -180,6 +180,9 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
         iBlur3Capture = new ViewGroupPartRenderer(listView, contentView, listView::drawChild);
         listView.addEdgeEffectListener(() -> listView.postOnAnimation(this::blur3_InvalidateBlur));
         listView.setSections();
+        if (!actionBar.getOccupyStatusBar()) {
+            listView.setPadding(0, needActionBarPadding() ? ActionBar.getCurrentActionBarHeight() : AndroidUtilities.dp(12), 0, 0);
+        }
         contentView.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL));
 
         actionBarBackground = new View(context) {
@@ -377,7 +380,8 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
 
     @Override
     public void onInsets(int left, int top, int right, int bottom) {
-        listView.setPadding(0, needActionBarPadding() ? actionBar.getMeasuredHeight() : (top + AndroidUtilities.dp(12)), 0, bottom);
+        var topPadding = needActionBarPadding() ? ActionBar.getCurrentActionBarHeight() : AndroidUtilities.dp(12);
+        listView.setPadding(0, top + topPadding, 0, bottom);
         super.onInsets(left, top, right, bottom);
     }
 
