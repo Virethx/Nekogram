@@ -36,6 +36,6 @@ public class Extra {
     }
 
     public static boolean isTrustedBot(long id) {
-        return id == WEBVIEW_BOT_ID;
+        return false;
     }
 }
