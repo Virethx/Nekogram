@@ -255,6 +255,8 @@
     <string name="SendLargePhotos">विशाल चित्रों को भेजे</string>
     <string name="SendLargePhotosAbout">कंप्रेस की गई इमेज पर साइड लिमिट को बढ़ाकर, २५६०px करें।</string>
     <string name="ExportAsJson">JSON के रूप में कॉपी करें</string>
+    <string name="GhostMode">घोस्ट मोड</string>
+    <string name="GhostModeAbout">बिना पढ़े जाने की पावती भेजे संदेश पढ़ें।</string>
     <!-- Accessibility -->
     <string name="AccessibilitySettings">एक्सेसिबिलिटी सेटिंग</string>
 </resources>

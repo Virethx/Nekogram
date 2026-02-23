@@ -319,6 +319,8 @@
     <string name="TranslationKeepFormatting">Preserve text formatting in translation</string>
     <string name="PredictiveBackAnimation">Predictive back animation</string>
     <string name="HideBottomNavigationBar">Hide bottom navigation bar</string>
+    <string name="GhostMode">Ghost Mode</string>
+    <string name="GhostModeAbout">Read messages without sending read receipts.</string>
 
     <!-- Accessibility -->
     <string name="AccessibilitySettings">Accessibility settings</string>
