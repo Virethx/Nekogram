@@ -65,6 +65,7 @@ public class NekoConfig {
 
     private static final Object sync = new Object();
     public static boolean preferIPv6 = false;
+    public static boolean ghostMode = false;
 
     public static boolean useSystemEmoji = false;
     public static boolean ignoreBlocked = false;
@@ -169,6 +170,7 @@ public class NekoConfig {
 
             SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
             preferIPv6 = preferences.getBoolean("preferIPv6", false);
+            ghostMode = preferences.getBoolean("ghostMode", false);
             ignoreBlocked = preferences.getBoolean("ignoreBlocked2", false);
             tabletMode = preferences.getInt("tabletMode", TABLET_AUTO);
             nameOrder = preferences.getInt("nameOrder", 1);
@@ -615,6 +617,14 @@ public class NekoConfig {
         SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("preferIPv6", preferIPv6);
+        editor.apply();
+    }
+
+    public static void toggleGhostMode() {
+        ghostMode = !ghostMode;
+        SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nekoconfig", Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("ghostMode", ghostMode);
         editor.apply();
     }
 

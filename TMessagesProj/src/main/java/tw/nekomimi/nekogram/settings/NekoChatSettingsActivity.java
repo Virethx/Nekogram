@@ -48,6 +48,7 @@ public class NekoChatSettingsActivity extends BaseNekoSettingsActivity implement
     private ActionBarMenuItem resetItem;
 
     private final int stickerSizeRow = rowId++;
+    private final int ghostModeRow = rowId++;
     private final int hideTimeOnStickerRow = rowId++;
     private final int showTimeHintRow = rowId++;
     private final int reducedColorsRow = rowId++;
@@ -143,6 +144,7 @@ public class NekoChatSettingsActivity extends BaseNekoSettingsActivity implement
                 AndroidUtilities.updateViewVisibilityAnimated(resetItem, true, 0.5f, true);
             }
         }).slug("stickerSize"));
+        items.add(UItem.asCheck(ghostModeRow, LocaleController.getString(R.string.GhostMode), LocaleController.getString(R.string.GhostModeAbout)).slug("ghostMode").setChecked(NekoConfig.ghostMode));
         items.add(UItem.asCheck(hideTimeOnStickerRow, LocaleController.getString(R.string.HideTimeOnSticker)).slug("hideTimeOnSticker").setChecked(NekoConfig.hideTimeOnSticker));
         items.add(UItem.asCheck(showTimeHintRow, LocaleController.getString(R.string.ShowTimeHint), LocaleController.getString(R.string.ShowTimeHintDesc)).slug("showTimeHint").setChecked(NekoConfig.showTimeHint));
         items.add(UItem.asCheck(reducedColorsRow, LocaleController.getString(R.string.ReducedColors)).slug("reducedColors").setChecked(NekoConfig.reducedColors));
@@ -213,7 +215,12 @@ public class NekoChatSettingsActivity extends BaseNekoSettingsActivity implement
     @Override
     protected void onItemClick(UItem item, View view, int position, float x, float y) {
         var id = item.id;
-        if (id == ignoreBlockedRow) {
+        if (id == ghostModeRow) {
+            NekoConfig.toggleGhostMode();
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(NekoConfig.ghostMode);
+            }
+        } else if (id == ignoreBlockedRow) {
             NekoConfig.toggleIgnoreBlocked();
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(NekoConfig.ignoreBlocked);

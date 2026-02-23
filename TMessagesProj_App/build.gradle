@@ -11,13 +11,17 @@ dependencies {
 }
 
 sentry {
-    uploadNativeSymbols = true
-    includeSourceContext = true
+    uploadNativeSymbols = !project.hasProperty('disableSentry')
+    includeSourceContext = !project.hasProperty('disableSentry')
     additionalSourceDirsForSourceContext = [ '../TMessagesProj/src/main/java' ]
     autoInstallation {
         enabled = false
     }
-    ignoredBuildTypes = ["debug"]
+    if (project.hasProperty('disableSentry')) {
+        ignoredBuildTypes = ["release", "play", "debug"]
+    } else {
+        ignoredBuildTypes = ["debug"]
+    }
 }
 
 android {
