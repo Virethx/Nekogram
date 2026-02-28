@@ -39,7 +39,7 @@ jobs:
 
       - name: Restore keystore
         run: |
-          printf '%s' "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > nekogram.keystore
+          printf '%s' "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > TMessagesProj_App/nekogram.keystore
 
       - name: Create local.properties
         run: |
