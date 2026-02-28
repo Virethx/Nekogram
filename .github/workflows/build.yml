@@ -18,6 +18,7 @@ jobs:
           java-version: 21
 
       - name: Cache Gradle
+        id: gradle-cache
         uses: actions/cache@v4
         with:
           path: |
@@ -28,35 +29,66 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Enable gradle permission
-        run: chmod +x gradlew
+        run: |
+          git update-index --chmod=+x gradlew
+          chmod +x ./gradlew
 
       - name: Restore google-services.json
         run: |
-          echo "${{ secrets.FIREBASE_JSON }}" | base64 -d > TMessagesProj_App/google-services.json
+          printf '%s' "${{ secrets.FIREBASE_JSON }}" | base64 --decode > TMessagesProj_App/google-services.json
 
       - name: Restore keystore
         run: |
-          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > nekogram.keystore
+          printf '%s' "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > nekogram.keystore
 
       - name: Create local.properties
         run: |
-          echo "storeFile=../nekogram.keystore" >> local.properties
+          echo "storeFile=nekogram.keystore" >> local.properties
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> local.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> local.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> local.properties
 
       - name: Configure gradle
         run: |
-          echo "org.gradle.jvmargs=-Xmx3g" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dkotlin.daemon.jvm.options=-Xmx3g" >> gradle.properties
+          echo "org.gradle.daemon=false" >> gradle.properties
+          echo "org.gradle.parallel=true" >> gradle.properties
+          echo "org.gradle.configureondemand=true" >> gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           echo "ABI_FILTERS=armeabi-v7a" >> gradle.properties
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace
+        id: buildstep
+        continue-on-error: true
+        run: |
+          set +e
+          ./gradlew assembleRelease --stacktrace --no-daemon | tee gradle.log
+          echo "EXIT_CODE=${PIPESTATUS[0]}" >> $GITHUB_ENV
+          exit 0
+
+      - name: Force save Gradle cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ github.run_id }}
+
+      - name: Upload Logs
+        if: always() && env.EXIT_CODE != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            gradle.log
+            **/build/reports/**
+            **/build/outputs/logs/**
 
       - name: Upload APK
+        if: env.EXIT_CODE == '0'
         uses: actions/upload-artifact@v4
         with:
           name: Nekogram-ARMv7a
-          path: TMessagesProj/build/outputs/apk/
+          path: TMessagesProj_App/build/outputs/apk/release/*.apk
