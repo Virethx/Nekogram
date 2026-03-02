@@ -55,6 +55,10 @@ android {
                 signingConfig signingConfigs.sign
             }
             applicationIdSuffix ".beta"
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles '../TMessagesProj/proguard-rules.pro'
+
         }
 
         release {
